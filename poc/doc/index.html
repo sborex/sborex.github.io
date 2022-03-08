@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            sborex -- doc
+        </title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="../w3.css" rel="stylesheet" type="text/css"/>
+        <style>
+            h2,
+            h2,
+            h3,
+            h4,
+            h5 {
+                margin-top: 60px;
+                margin-bottom: 10px
+            }    
+
+            a {color: blue}
+        </style>
+    </head>
+    <body>
+        <div class="w3-container" style="max-width: 1000px; margin: auto">
+            <div class="w3-card-4 w3-panel w3-blue-gray w3-padding-large">
+                <h1 class="w3-serif w3-jumbo">sborex</h1>
+                <i class="w3-serif w3-xlarge">
+                    documentation
+                </i>
+            </div>
+
+            <div class="w3-panel">
+                <h2>
+                    What is Sborex
+                </h2>
+                <p>
+                    Sborex is a graphical flowchart execution 
+                    engine that has extensive integration capabilities powered by embedded
+                    <a href="https://camel.apache.org/">Apache Camel</a>.
+                </p>
+                <p>
+                    Sborex may be seen as a visual <a href="https://camel.apache.org/">Apache Camel</a>
+                    route editor that represents the data flow and transformations as an executable
+                    sequence of graphical elements.
+                </p>
+                <p>
+                    Additionally, Sborex provides the means of creating a web interface for the users to 
+                    interact with the processes.
+                </p>
+                <p>
+                    Basically, Sborex extends the visual <a href="http://www.bpmn.org/">BPMN</a> language by making 
+                    the User Tasks to become web pages, and the Messages to be Apache Camel Endpoints.
+                </p>
+
+                <h3>
+                    About this Document
+                </h3>
+                <p>
+                    This document is preliminary and is composed by <a href="mailto:info@sborex.com">the Sborex 
+                        developer</a> to provide 
+                    some hints on how to create one's own microservices or applications.
+                </p>
+                <p>
+                    At this stage of the Sborex platform development it would be easier if you are familiar with
+                    Apache Camel and some basics of BPMN or some of the existing BPMN execution engines like 
+                    <a href="https://docs.camunda.org/">Camunda</a> or 
+                    <a href="https://flowable.com/open-source/docs/bpmn/ch02-GettingStarted/">Flowable</a>. 
+                    In the future Sborex aims to be controlled visually and intuitively
+                    without any long learning curve ("low code" / "no code").
+                </p>
+                <p>
+                    This document refers to the Proof Of Concept distribution described 
+                    <a href="../">here</a>. It will help if the system is started up and running on the 
+                    <a href="http://localhost:8585/">localhost:8585</a> and
+                    a user "fedd" is logged in: some links in this doc point to the process editor.
+                </p>
+                <p>
+                    Please join our subreddit to discuss questions and share the ideas:
+                </p>
+
+                <a class="w3-button w3-teal" href="https://www.reddit.com/r/sborex/">Our Subreddit</a>
+
+
+
+                <h2>
+                    How it Works
+                </h2>
+                <h3>
+                    Persisted Data
+                </h3>
+                <p>
+                    A process, when started, has data associated with every process instance. 
+                    The data is persisted and as for today it doesn't have to follow any predefined schema.
+                    It is accessible in scripting and templating contexts of the processes as 
+                    nested key-value maps. It may be used to search and sort the process instances running in the 
+                    system.
+                </p>
+                <p>
+                    The data keeps being stored and available for retrieval after the process instance ends.
+                </p>
+
+                <h3>
+                    Operational Data
+                </h3>
+                <p>
+                    A running process has a kind of data that is not persisted but kept only in memory 
+                    for the time the process is performing its steps, between the waits.
+                </p>
+                <p>
+                    This kind of data appears from external
+                    sources, can be accessed, modified with scripts and services and, if needed, 
+                    persisted by explicitly associating it with the persisted process instance data.
+                </p>
+
+                <h3>
+                    Sequences, Steps and Waits &mdash; and the Leaps
+                </h3>
+                <p>
+                    Steps correspond to BPMN elements which are shapes on the flowchart and arrows between them.
+                </p>
+                <p>
+                    Steps are executed one by one until a BPMN element that commands to pause the execution &mdash; a Wait Step 
+                    &mdash; is encountered, or until there are no BPMN elements left.
+                </p>
+                <p>
+                    If there is a fork in the process definition, so that there are several BPMN elements  
+                    following the current one, the subsequent Steps are executed in parallel &mdash; additional  
+                    Java threads are started.
+                </p>
+
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="parallelSequence.svg" alt="Process Definition Example with Parallel Execution" style="width: 50%"/>
+                </p>
+
+                <p>
+                    We call these groups of Steps the Leaps. So each Leap lasts 
+                </p>
+                <ul>
+                    <li>from the process starting Step till the intermediate Wait Steps;</li>
+                    <li>from the process starting Step till the end of the process;</li>
+                    <li>from the intermediate Wait Step till another intermediate Wait Steps;</li>
+                    <li>from the intermediate Wait Step till the end of the process.</li>
+                </ul>
+
+                <p><i>
+                        The concept of Leaps is somewhat similar to &quot;Transactions&quot; in other 
+                        existing BPMN implementations.
+                    </i></p>
+
+                <p>
+                    The Operational Data exists throughout the Leap. It is duplicated for parallel execution threads,
+                    merged back if needed and discarded at the Leap end unless persisted explicitly.
+                </p>
+                <p>
+                    The Process Instance is called the Sequence. If the Sequence stops at some Waits, 
+                    those Waits are called the Sequence Status. If the Sequence has ended, its Status is empty.
+                </p>
+                <p>
+                    The Sequence Data is that Persisted Data described earlier.
+                </p>
+
+
+                <h2>
+                    Process Definitions
+                </h2>
+                
+                <p>
+                    The Flowcharts of the Process Definitions, or the Diagrams, whatever you may call them, is a set 
+                    of interconnected and standalone elements placed on canvas, which mostly conform with BPMN standard;
+                    but besides that, there are also some additional Sborex-specific attributes to the process definitions,
+                    which are Views, Beans and Resources.
+                </p>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="register.svg" alt="Full Process Definition Example" style="width: 40%"/>
+                </p>
+                <p>
+                    The Process Definition may be thought of as a Class with an algorithm that defines its methods and the lifecycle.
+                </p>
+                <p>
+                    The running Process &mdash; the Process Instance &mdash; with its associated data looks like an Object in 
+                    the <a href="https://en.wikipedia.org/wiki/Object-oriented_programming">object oriented paradigm</a>.
+                </p>
+                
+                <p>
+                    You may create a Process Definition from a root page on <a href="http://localhost:8585/">http://localhost:8585/</a>,
+                    by providing a New Process Code and starting to edit the new Draft.
+                </p>
+                <p>
+                    Alternatively you may save an existing Process Definition as Draft and edit it.
+                </p>
+                <p>
+                    Deploy button should make the Process Definition startable.
+                </p>
+                <p class="w3-yellow">
+                    There's no (user friendly) way to load a BPMN file currently.
+                </p>
+                
+
+                <h3>
+                    Views
+                </h3>
+                <p>
+                    A Process Definition may have its own Views, which are basically the web page templates. We may provide a 
+                    way to display the user the process instance data in a human-readable manner, designing 
+                    a nicely looking page with variable placeholders that will be replaced (on server side) with the data
+                    associated with the process instance. 
+                </p>
+                <p>
+                    The template language used to define a View is 
+                    <a href="http://mvel.documentnode.com/#mvel-2.0-templating-guide">MVEL</a>. 
+                    Besides a couple of global variables, the process instance object is available with the name 
+                    <code class="w3-codespan">sequence</code>, and the data associated with the process instance is retrieved 
+                    using the field <code class="w3-codespan">data</code>, e.g. <code class="w3-codespan">sequence.data</code>.
+                </p>
+                <p>
+                    Process Definition Views are accessible via web by the Process Definition Code in the URL, for example,
+                    <a href="http://localhost:8585/register">http://localhost:8585/register</a> opens up a default View of the
+                    <a href="../../res/process.html?taskId=modelsource&modelId=register">register</a> process definition.
+                </p>
+                <p>
+                    A Process Definition may have multiple variants of Views. To create a View variant press + button in the process 
+                    definition View editor and define a new View with a unique Code. The Process Instance or Process Definition Views 
+                    are available by specifying a variant parameter looking like this: 
+                    <code class="w3-codespan">http://[server][:port]/[processCode]?variant=[viewCode]</code>. 
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="processView.png" alt="Process Definition View Editor" style="width: 90%"/>
+                </p>
+
+
+                <h3>
+                    Beans
+                </h3>
+                <p>
+                    Despite being defined on a Process Definition level, this type of object becomes globally available to the 
+                    scripts and templates throughout the system.
+                </p>
+                <p class="w3-yellow">
+                    This may change in the future to include the Process Definition name into the object name.
+                </p>
+                <p>
+                    The Bean Definition currently contains the Javascript code that creates a Java object.
+                </p>
+                <p class="w3-yellow">
+                    This will become visually configurable in the future.
+                </p>
+                <p>
+                    You may create any type of object that will be instantiated upon the system startup and kept always in memory.
+                    This is useful for example, for preconfiguring some of the Apache Camel endpoints that can't be 
+                    created just with the URL.
+                </p>
+                <p>
+                    If the bean created happens to be an Apache Camel Component, it will also be added to the component registry 
+                    under that name.
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="processBean.png" alt="Process Definition Bean Editor" style="width: 90%"/>
+                </p>
+
+                <h3>
+                    Resources
+                </h3>
+                <p>
+                    These are the static web resources that the system will serve intact by the address [process code]/[resource code].
+                </p>
+                <p>
+                    You can put some small images, files or icons here. This is not the best place to put big byte arrays 
+                    like videofiles as these resources are stored right in the Process Definition, and it may become 
+                    unmanageably big.
+                </p>
+                <p>
+                    The example below defines a file resource that is available at 
+                    <a href="http://localhost:8585/register/sample.csv">http://localhost:8585/register/sample.csv</a>
+                    address:
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="processResource.png" alt="Process Definition Resource Editor" style="width: 90%"/>
+                </p>
+
+                <h2>
+                    Session Process
+                </h2>
+                <p>
+                    If you call the process 
+                    <a href="../../res/process.html?taskId=modelsource&modelId=session">session</a>, 
+                    it will become a Session Process. This process is started automatically for each 
+                    new web session &mdash; when a new user comes &mdash; and its default View is available
+                    at a web root, for example, <a href="http://localhost:8585/">http://localhost:8585/</a>.
+                </p>
+                <p>
+                    This process is responsible for storing the current user permissions as its Persisted Data. The Persisted Data variable 
+                    name for this is  <code class="w3-codespan">permissions</code> and it has to be a String or a 
+                    collection of Strings with the user name and the names of the user's roles or groups.
+                    The system will compare the required permissions with the actual permissions of the current user.
+                </p>
+                <p>
+                    As mentioned in other places, to populate or display the permissions you may access this variable with the expression
+                    <code class="w3-codespan">sequence.data.permissions</code>, which works both in Javascript and MVEL scripts and templates.
+                </p>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="session.svg" alt="Session Process Definition Example" style="width: 40%"/>
+                </p>
+
+                <h2>
+                    Flowchart Elements
+                </h2>
+
+                <p>
+                    The Process Definition editor allows a user to place elements on a flowchart, connect them with
+                    each other and specify their configuration. This is done with the mouse and context menus. 
+                    When you click an element, the 
+                    wrench symbol sets the generic type and modifier of an element, and the gear symbol invokes the specific 
+                    configuration menu.
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="wrenchMenu.png" alt="Generic Type and Modifier Setting" style="width: 30%"/>
+                </p>
+                <p>
+                    There are three main types of shapes on BPMN flowcharts, which are Tasks, Gateways and Events, and Sequence Flows 
+                    connecting them. They are drawn as rectangles, diamonds, circles and arrows.
+                </p>
+
+                
+                
+                
+                <h3>
+                    Sequence Flow
+                </h3>
+                <p>
+                    It is an arrow that connects two elements and defined the sequence of execution.
+                </p>
+                <p>
+                    The element is configured with the following field:
+                </p>
+                <h5>
+                    Condition
+                </h5>
+                <p>
+                    It is a <a href="http://mvel.documentnode.com/">MVEL</a> expression. The execution will stop and not 
+                    proceed if it is false.
+                </p>
+                
+
+                <h3>
+                    Events
+                </h3>
+                <p>
+                    Events are represented by circles with a symbol inside.
+                    Events can be catching (unfilled symbol) and throwing (filled event symbol). Events can also be starting, 
+                    intermediate, boundary and ending.
+                </p>
+                <p>
+                    Catch Event waits until something external proceeds the execution, or in case of Start Catch Events, starts 
+                    the new process instance. The Catch Events have some Operational Data taken from outside of the process.
+                </p>
+
+                <p>
+                    Boundary Catch Events are like the Intermediate but they are attached to some Task element. 
+                </p>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="boundary.svg" alt="Process Definition Example with Parallel Execution" style="width: 30%"/>
+                </p>
+                <p>
+                    Boundary Catch Events are activated when this Task is activated and 
+                    stop waiting when the Task is completed and the execution moved forward. If the host Task is a Wait, 
+                    the Boundary Events may or may not, as per configuration, cancel the host Task's wait upon receiving the Event.
+                </p>
+
+
+
+                <h4>
+                    Message
+                </h4>
+
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="message.svg" alt="Message Events" style="width: 30%"/>
+                </p>
+
+
+                <p>
+                    This is the main element for integration Sborex processes with external systems. 
+                    In Message Event you basically invoke an 
+                    <a href="https://camel.apache.org/components/latest/eips/message-endpoint.html">
+                        Apache Camel Endpoint</a>.
+                </p>
+                <p>
+                    As you can guess, the Message Catch events are the Consumers, and the Throw Events
+                    are the Producers in terms of Apache Camel.
+                </p>
+                <p>
+                    When the Message Catch Event is invoked by Apache Camel, the Apache Camel 
+                    <a href="https://camel.apache.org/manual/latest/faq/using-getin-or-getout-methods-on-exchange.html">
+                        Exchange</a>
+                    is put into Operational Data with the name <code class="w3-codespan">exchange</code>,
+                    so you can access and modify data in scripts and services during the current Leap.
+                </p>
+
+                <p>
+                    See the examples in the <a href="../../res/process.html?taskId=modelsource&modelId=register">register</a>
+                    process of the trial POC app.
+                </p>
+
+
+                <p>
+                    The element is configured with the following fields:
+                </p>
+
+
+
+                <h5>
+                    URL
+                </h5>
+                <p>
+                    The main Message Event configuration parameter is URL. 
+                </p>
+                <p>
+                    For the list of available URL 
+                    templates and external systems available for integration you may inspect
+                    the <a href="https://camel.apache.org/components/latest/">Camel Component List</a>.
+                </p>
+                <p class="w3-amber">
+                    Please note that the version currently embedded in Sborex is 2.24.0, so 
+                    pay attention when reading the Camel docs. 
+                </p>
+                <p>
+                    Aside of a couple of custom built Components, only the Core Components
+                    are available in the POC version. But knowing Java it's not that hard to add 
+                    more :)
+                </p>
+                <p class="w3-yellow">
+                    The URL will be composed visually in the future.
+                </p>
+
+                <h5>
+                    Existing Key
+                </h5>
+                <p>
+                    This is a configuration field for Intermediate Message Catch Event only. 
+                </p>
+                <p>
+                    There can be a lot of Process Instances that are paused on the Intermediate Message Catch Event
+                    with the same URL, at least because they are the instances of the same Process Definition.
+                </p>
+                <p>
+                    In this field we may put an expression that will be evaluated upon the process reaching this 
+                    element. The resulting handler will be stored in the database.
+                </p>
+                <h5>
+                    Incoming Key
+                </h5>
+                <p>
+                    This is a configuration field for Intermediate Message Catch Event only.
+                </p>
+                <p>
+                    There can be a lot of Process Instances that are paused on the Intermediate Message Catch Event
+                    with the same URL, at least because they are the instances of the same Process Definition.
+                </p>
+                <p>
+                    In this field we may put an expression that will be evaluated when Apache Camel receives 
+                    new data for this endpoint URL. Then the system will look for the process instances that
+                    are waiting this endpoint and that have the matching Existing Key, and proceed only those 
+                    process instances.
+                </p>
+
+                <h4>
+                    Signal
+                </h4>
+
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="signal.svg" alt="Signal Events" style="width: 30%"/>
+                </p>
+
+
+                <p>
+                    Signal Throw Events are used to start the processes that have a Start Signal Catch Event,
+                    or to proceed the processes that are paused waiting on the Intermediate Signal Catch Event.
+                </p>
+                <p>
+                    Signals are named; only those Catch Events that has the same signal name will be invoked.
+                </p>
+                <p>
+                    See the POC <a href="../../res/process.html?taskId=modelsource&modelId=register">register</a>
+                    process for examples of throwing events, and the POC 
+                    <a href="../../res/process.html?taskId=modelsource&modelId=customer">customer</a> 
+                    process for catching. Note how the Signal Name templates contain the customer id reference to create the
+                    Process Definition specific Signal Names.
+                </p>
+                <p>
+                    The Operational Data will be available to the processes started or proceeded by the Signal. 
+                    The steps taken in the other processes are considered to be executed in the same Leap.
+                </p>
+                <p>
+                    The POC app contains some examples of signals (fix the links if the POC isn't running on localhost:8585): 
+                </p>
+                <ul>
+                    <li><a href="../../res/process.html?taskId=modelsource&modelId=signalStart">signalStart</a></li>
+                    <li><a href="../../res/process.html?taskId=modelsource&modelId=signalThrow">signalThrow</a> 
+                        (started automatically on system startup and signals the signalStart process)</li>
+                </ul>
+
+
+                <p>
+                    The element is configured with the following field:
+                </p>
+
+
+                <h5>
+                    Signal Name
+                </h5>
+                <p>
+                    This is a MVEL template of a signal name, which means that for the Catch Events we may specify 
+                    a signal name that will contain some process-specific data, and at the moment of Throw 
+                    we may construct a name and only the process instances which are awaiting
+                    for the signal of that name will be affected.
+                </p>
+                <p>
+                    Look how 
+                    <a href="../../res/process.html?taskId=modelsource&modelId=register">register</a>
+                    process signals the <a href="../../res/process.html?taskId=modelsource&modelId=customer">customer</a>
+                    to proceed by including the customer id in the Signal name.
+                </p>
+                <p>
+                    After the signal is sent two variables are created in the Operational Data, 
+                    <code class="w3-codespan">emit.proceeded</code> and <code class="w3-codespan">emit.started</code>,
+                    and they are set, accordingly, if the signal was caught by some existing process and if some new process instance
+                    was started.
+                </p>
+                <p>
+                    You may see how we check the <code class="w3-codespan">emit.proceeded</code> variable to choose
+                    execution path in an Exclusive Gateway (a diamond with X symbol) in the
+                    <a href="../../res/process.html?taskId=modelsource&modelId=register">register</a>
+                    process.
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="flowCondition.png" alt="Flow Condition" style="width: 20%"/>
+                </p>
+
+                <h4>
+                    Other Events
+                </h4>
+                <p>
+                    Out of the BPMN standard, Errors, Excalations and Timers are implemented. Timers aren't 
+                    configurable from the visual editor yet.
+                </p>
+
+                <h3>
+                    Gateways
+                </h3>
+                <p>
+                    Depicted as diamonds, the gateways define the path forks with the decision which way 
+                    the execution will go.
+                </p>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="gateways.svg" alt="Gateways" style="width: 30%"/>
+                </p>
+                <p>
+                    From left to right, these are Exclusive, Parallel, Inclusive and Event-Based Gateways,
+                    Thew work as BPMN standard for Gateways implies. 
+                </p>
+                <p>
+                    The path conditions are set with MVEL expression in the arrows (called Sequence Flows in BPMN) 
+                    outgoing from the diamonds.
+                </p>
+                <p>
+                    The POC app contains some examples of gateways (fix the links if the POC isn't running on localhost:8585): 
+                </p>
+                <ul>
+                    <li><a href="../../res/process.html?taskId=modelsource&modelId=exclusiveNoWait">exclusiveNoWait</a></li>
+                    <li><a href="../../res/process.html?taskId=modelsource&modelId=inclusiveWait">inclusiveWait</a></li>
+                    <li><a href="../../res/process.html?taskId=modelsource&modelId=parallelNoWait">parallelNoWait</a> 
+                        (started automatically on system startup)</li>
+                    <li><a href="../../res/process.html?taskId=modelsource&modelId=inclusiveWait">parallelWait</a>
+                        (started automatically on system startup)</li>
+                </ul>
+                <p>
+                    Two of the processes are started automatically every time the system starts, this is for test purposes.
+                </p>
+
+
+                <h3>
+                    Tasks
+                </h3>
+                <p>
+                    The main building block for the BPMN diagram is a Task that is drawn ad a rectangle with a symbol
+                    in its corner.
+                </p>
+                <p>
+                    In Sborex, the Tasks may be either waiting or non-waiting. The non-waiting tasks are executed in the 
+                    same Leap; the waiting Tasks stop execution and start waiting for some external input.
+                </p>
+                <p>
+                    As per BPMN standard, Tasks can be configured to repeat themselves or execute several times 
+                    simultaneously in parallel threads.
+                </p>
+                <p>
+                    Tasks also can have Boundary Catch Events parasite on them.
+                </p>
+                <p>
+                    The POC app contains some examples of processes with tasks to test the multi-instance features 
+                    (fix the links if the POC isn't running on localhost:8585): 
+                </p>
+                <ul>
+                    <li><a href="../../res/process.html?taskId=modelsource&modelId=straight">straight</a></li>
+                    <li><a href="../../res/process.html?taskId=modelsource&modelId=straightLoop">straightLoop</a>
+                        (started automatically on system startup)</li>
+                    <li><a href="../../res/process.html?taskId=modelsource&modelId=straightParallel">straightParallel</a> 
+                        (started automatically on system startup)</li>
+                    <li><a href="../../res/process.html?taskId=modelsource&modelId=straightSequential">straightSequential</a>
+                        (started automatically on system startup)</li>
+                </ul>
+
+                <p>
+                    The Tasks can be repeated or multiplied to run in parallel:
+                </p>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="looped.svg" alt="Loop" style="width: 20%"/>
+                </p>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="multiinstance.svg" alt="Multi-Instance" style="width: 50%"/>
+                </p>
+                
+                
+                <p>
+                    The Tasks that are configured as multi-instance or looped have additional 
+                    configuration items:
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="loop.png" alt="Loop Task Configuration" style="width: 30%"/>
+                </p>
+                
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="parallel.png" alt="Parallel Task Configuration" style="width: 30%"/>
+                </p>
+                
+                <h5>
+                    Split Expression
+                </h5>
+                <p>
+                    This is an <a href="https://camel.apache.org/components/latest/eips/split-eip.html">Apache Camel Split
+                        XML definition</a>: the <code class="w3-codespan">&lt;split&gt;</code> element internals without 
+                    <code class="w3-codespan">&lt;to&gt;</code> element, see the 
+                    <a href="https://camel.apache.org/components/latest/eips/split-eip.html#_examples">examples</a>.
+                </p>
+                <p>
+                    This Split setting operates with the Exchange that is currently in Operational Data during execution. The repeated 
+                    or parallelized Task instance will have its own Exchange with one chunk of the original data as its message. (These
+                    are all Apache Camel terminology.)
+                </p>
+                <p>
+                    Remember, the Split Expression has to be an XML snippet. See example in the 
+                    <a href="../../res/process.html?taskId=modelsource&modelId=register">register</a>
+                    process where we split a big CSV file by lines and repeat a SubProcess for each line. (See how we
+                    are invoking our own custom 
+                    <a href="https://github.com/vsetec/vsetec-utilities/blob/master/src/main/java/com/vsetec/utilities/ReaderTokenizer.java">
+                        ReaderTokenizer</a>
+                    Bean that we have defined for the "register" process.)
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="sequential.png" alt="Loop Task Configuration" style="width: 50%"/>
+                </p>
+                <p class="w3-yellow">
+                    The split expression will be edited visually in the future.
+                </p>
+
+                <h5>
+                    Loop Cardinality / Loop Maximum
+                </h5>
+                <p>
+                    It is an expression that evaluates to the maximum number of repetitions or parallel instances.
+                </p>
+
+                <h5>
+                    Loop Condition
+                </h5>
+                <p>
+                    It is a boolean expression that has to be true for the loop to continue its iterations. 
+                    It is set for the looped Tasks (with the circular arrow modifier sign)
+                </p>
+
+                <h5>
+                    Test Before
+                </h5>
+                <p>
+                    It is a boolean expression that says whether the previously mentioned Loop Condition has to be checked
+                    before the iteration instead of after.
+                    It is set for the looped Tasks (with the circular arrow modifier sign)
+                </p>
+
+                <h5>
+                    Completion Condition
+                </h5>
+                <p>
+                    It is a boolean expression that has to be true for the Task to continue its iterations
+                    or parallel executions.
+                    It is set for the Multi-Instance Tasks (with the hambuger modifier sign, see the picture below)
+                </p>
+
+
+
+                <h4>
+                    User Task
+                </h4>
+
+
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="user.svg" alt="User task" style="width: 30%"/>
+                </p>
+                <p>
+                    A manual action task that provides a web page for the user to complete the task.
+                </p>
+                <p>
+                    User Task is a Wait Step.
+                </p>
+                <p>
+                    User Task View is displayed when a GET request is made to the system with the
+                    Wait Step id in the URL.
+                </p>
+                <p>
+                    User Task View is completed when a PUT or POST request is made to the system with the
+                    Wait Step id in the URL. 
+                    <a href="https://camel.apache.org/components/latest/jetty-component.html#_message_headers">
+                        An Exchange with an Incoming Message</a> of the type 
+                        <a href="https://www.javadoc.io/doc/org.apache.camel/camel-http-common/2.24.0/org/apache/camel/http/common/HttpMessage.html">
+                            HttpMessage</a> 
+                    will be put into Operational Data as an exchange.
+                </p>
+                <p>
+                    In some cases the User Task Name can be used in the URLs to invoke a User Task, which will
+                    be documented later.
+                </p>
+                
+                <p>
+                    The element is configured with the following fields:
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="views.png" alt="User Task Configuration" style="width: 50%"/>
+                </p>
+
+                <h5>
+                    Authorities
+                </h5>
+                <p>
+                    This is a MVEL expression or a comma separated list of strings that represent the
+                    authorities; this may be a user name, role names or group names.
+                </p>
+                <p>
+                    This list of required authorities is compared to the current Session user permissions
+                    when the User Task is being completed - i.e. it's View is called with the 
+                    <code class="w3-codespan">PUT</code> or <code class="w3-codespan">POST</code>
+                    methods. There should be al least one match in order to proceed the process.
+                </p>
+
+                <h5>
+                    Views
+                </h5>
+                <p>
+                    This is actually not a field but a group of fields that configures several Views of the User Task.
+                </p>
+                <p>
+                    A User Task may have multiple Views, which are basically the web page templates. We may provide a 
+                    way to display the user the process instance data in a human-readable manner, designing 
+                    a nicely looking page with variable placeholders that will be replaced with the data
+                    associated with the process instance. 
+                </p>
+                <p>
+                    As in the other places, the template language used is <a href="http://mvel.documentnode.com/">MVEL</a>. 
+                    Besides a couple of global variables, the process instance object is available with the name 
+                    <code class="w3-codespan">sequence</code>, and the data associated with the process instance is retrieved 
+                    using the field <code class="w3-codespan">data</code>, e.g. <code class="w3-codespan">sequence.data</code>.
+                    Information about the Step is available via <code class="w3-codespan">step</code> variable in the template.
+                </p>
+                <p>
+                    To create a View variant press + button in the User Task configurator and define a new View with a unique Code. 
+                </p>
+                <p>
+                    Each View has its own Authorities field that should contain the list of the user, role or groupd names that
+                    are allowed to open this View (with the plain <code class="w3-codespan">GET</code> method).
+                </p>
+                <p>
+                    The User Task steps waiting for execution each have their own unique id in the form of UUID. We see the User Task
+                    Views by specifying the Wait Step id in the URL.
+                </p>
+                <p>
+                    Which View template will be used is controlled by the <code class="w3-codespan">?variant=viewCode</code> query 
+                    parameter in the URL.
+                </p>
+                <p>
+                    The View can not only be a HTML page or snippet, but actually anything. The Layout configuration field
+                    contains a MVEL template, and it may actually render into data of any type. See how the "modelsource"
+                    User Task of the <a href="../../res/process.html?taskId=modelsource&modelId=session">session</a>
+                    process returns an XML that it takes from the Sborex API.
+                </p>
+                <p class="w3-yellow">
+                    The View layout will be edited visually in the soon future. Press "Edit Layout" button to explore the visual editor
+                </p>
+
+
+                <h4>
+                    Script Task
+                </h4>
+
+
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="script.svg" alt="User task" style="width: 30%"/>
+                </p>
+                <p>
+                    An automated action task that runs a script on some interpreted language.
+                    Script Task is not a Wait Step, it will pass through in the same Leap.
+                </p>
+                <p>
+                    As the Script Task is executed, its result is put into Operational Data
+                    as a <code class="w3-codespan">result</code> variable.
+                </p>
+                <p>
+                    The element is configured with the following fields:
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="jsScript.png" alt="Script Task Configuration" style="width: 50%"/>
+                </p>
+
+                <h5>
+                    Script
+                </h5>
+                <p>
+                    Actual code snippet to run.
+                </p>
+                <p>
+                    The following variables are available in scripts:
+                </p>
+                <ul>
+                    <li><code class="w3-codespan">sequence</code></li>
+                    <li><code class="w3-codespan">step</code></li>
+                    <li><code class="w3-codespan">engine</code></li>
+                    <li>all Persisted Data by their keys</li>
+                    <li>all Operational Data by their keys</li>
+                    <li>all Beans by their names</li>
+                </ul>
+
+                <h5>
+                    Language
+                </h5>
+                <p>
+                    Currently two languages are supported:
+                </p>
+                <ul>
+                    <li><a href="http://openjdk.java.net/projects/nashorn/">JavaScript</a></li>
+                    <li><a href="http://mvel.documentnode.com/">MVEL</a> 
+                </ul>
+                <p>
+                    Here's an example of the key-value structure transformation using the magic of MVEL
+                    in the <a href="../../res/process.html?taskId=modelsource&modelId=register">
+                    register</a> process:
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="mvelScript.png" alt="Mvel Script Task Configuration" style="width: 70%"/>
+                </p>
+                <p class="w3-yellow">
+                    The transformation script will be edited visually in the future.
+                </p>
+
+            
+            
+            
+            
+            
+            
+            
+                <h4>
+                    Service Task
+                </h4>
+
+
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="service.svg" alt="Service Task" style="width: 30%"/>
+                </p>
+                <p>
+                    An automated action task that runs some Apache Camel service.
+                    Service Task is not a Wait Step, it will pass through in the same Leap.
+                </p>
+                <p>
+                    This Task affects an <code class="w3-codespan">exchange</code> that should be
+                    present in the Operational Data.
+                </p>
+                <p>
+                    The element is configured with the following field:
+                </p>
+
+                <h5>
+                    Service
+                </h5>
+                <p>
+                    This is an <a href="https://camel.apache.org/components/latest/eips/enterprise-integration-patterns.html">
+                        Apache Camel Processor XML definition</a>.
+                </p>
+                <p>
+                    This is actually a snippet of an Apache Camel XML route definition, which in turn can invoke a lot of
+                    useful Processors, <a href="https://camel.apache.org/components/latest/dataformats/index.html">Data Formats</a>,
+                    <a href="https://camel.apache.org/components/latest/languages/index.html">languages</a> and anything else.
+                </p>
+                <p>
+                    See example in the 
+                    <a href="../../res/process.html?taskId=modelsource&modelId=register">register</a>
+                    process where we unmarshal a CSV text putting it into a key-value map structure:
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="unmarshal.png" alt="Script Task Configuration" style="width: 50%"/>
+                </p>
+                <p class="w3-yellow">
+                    The service configuration will be edited visually in the future.
+                </p>
+
+
+                
+                <h4>
+                    Message Task
+                </h4>
+
+
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="messageTask.svg" alt="Message Tasks" style="width: 30%"/>
+                </p>
+                <p>
+                    The Message Tasks are the same as the Message Events: the Receive Message 
+                    Task is a Wait Step, the Send Message Task is proceeded immediately.
+                </p>
+                <p>
+                    These tasks are configured the same way as Message Events, except that 
+                    as other Tasks these elements may be Looped, Multi-Instance and have 
+                    Boundary Events attached to them.
+                </p>
+                
+
+                <h4>
+                    Call Activity Task
+                </h4>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="processCall.svg" alt="Process Call Task" style="width: 30%"/>
+                </p>
+                <p>
+                    This element invokes another Process Definition by its code. The process 
+                    is started in the same Leap and has the same Operational Data. It may 
+                    finish in the same Leap and proceed if there are no Wait Steps 
+                    inside the called Process, otherwise it will wait and be a part of 
+                    the Process Status until
+                    the nested process Waits are all proceeded.
+                </p>
+                <p>
+                    Like all Tasks this element may be Looped, Multi-Instance and have 
+                    Boundary Events attached to it.
+                </p>
+                <p>
+                    The element is configured with the following field:
+                </p>
+
+                <h5>
+                    Process
+                </h5>
+                <p>
+                    It is a code of another process that will be called.
+                </p>
+                <p class="w3-yellow">
+                    This plain text field will be improved to help the user to choose the Process Definition.
+                </p>
+                
+
+                <h4>
+                    Call Activity Task
+                </h4>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="subProcess.svg" alt="SubProcess Task" style="width: 30%"/>
+                </p>
+                <p>
+                    This element allows to define another Process Definition right in this
+                    Provess Definition. 
+                    This SubProcess
+                    is started in the same Leap and has the same Operational Data. It may 
+                    finish in the same Leap and proceed if there are no Wait Steps 
+                    inside the called Process, otherwise it will wait and be a part of 
+                    the Process Status until
+                    the nested process Waits are all proceeded.
+                </p>
+                <p>
+                    By defining some set of Elements inside a SubProcess we can make this group
+                    to be Looped, Multi-Instance and have 
+                    Boundary Events attached to it.
+                </p>
+                <p>
+                    In the POC, the whole central part of the
+                    <a href="../../res/process.html?taskId=modelsource&modelId=register">register</a>
+                    process is a repeatable SubProcess:
+                </p>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="register.svg" alt="SubProcess example" style="width: 50%"/>
+                </p>
+
+                <h4>
+                    Manual Task, Business Rule Task
+                </h4>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="manualbusiness.svg" alt="Unused Task" style="width: 30%"/>
+                </p>
+                <p>
+                    These BPMN elements don't work yet.
+                </p>
+                <p class="w3-yellow">
+                    The Manual Task may be used for defining User Forms instead of the free form html templates. 
+                    The Business Rule Task will invoke a neural network.
+                </p>
+
+
+                <h2>
+                    Custom Camel Components
+                </h2>
+                <p>
+                    We've written some Components of our own to ease the development.
+                </p>
+                <h3>
+                    LDAP
+                </h3>
+                <p>
+                    Unlike the <a href="https://camel.apache.org/components/latest/ldap-component.html">standard 
+                        LDAP Component</a>, our own
+                    <a href="https://github.com/vsetec/vsetec-utilities/blob/master/src/main/java/com/vsetec/utilities/camel/LdapComponent.java">LDAP</a>
+                    component doesn't require any object to be pre-created; we may define the LDAP queries
+                    simply with the URL.
+                </p>
+                <h3>
+                    SIP
+                </h3>
+                <p>
+                    Our experimental 
+                    <a href="https://github.com/vsetec/camel-sip">SIP</a>
+                    should be sufficient to create any SIP proxy or server but is not tested.
+                </p>
+                <p>
+                    You are invited to improve this project.
+                </p>
+                
+                <h2>
+                    Hints
+                </h2>
+                <h3>
+                    MVEL templates vs expressions
+                </h3>
+                <p>
+                    <a href="http://mvel.documentnode.com/">MVEL expressions</a> and
+                    <a href="http://mvel.documentnode.com/#mvel-2.0-templating-guide">MVEL templates</a>
+                    are related but different. 
+                </p>
+                <p>
+                    MVEL expressions evaluate to something, they have a resulting value of some datatype - string,
+                    number, date, boolean.
+                </p>
+                <p>
+                    Template is a plain text that may suddenly 
+                    have "orb tags" here and there throughout the text. The tags look like 
+                    <code class="w3-codespan">@{this}</code> and contain MVEL 
+                    expressions or other commands like <code class="w3-codespan">@if{}</code> or 
+                    <code class="w3-codespan">@foreach{}</code>,
+                    and their result is concatenated with the surrounding text.
+                </p>
+                <p>
+                    So templates are mostly evaluated to text, or strings. BUT if your template contains 
+                    ONLY the <code class="w3-codespan">@{orb-tag}</code> and doesn't have any text 
+                    preceding or following the tag, the 
+                    template may evaluate to a number or date, or boolean, whatever you write in your 
+                    tag.
+                </p>
+                <p>
+                    Pay attention where the doc says you should use template or expression.
+                </p>
+                <p>
+                    However if the doc says you should use script and the system allows you to choose
+                    a scripting language, you may choose either Javascript, or you may choose MVEL, and
+                    in the latter case you should use MVEL expression (not template).
+                </p>
+
+            </div>
+        </div> 
+    </body>
+</html>

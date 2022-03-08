@@ -1,0 +1,825 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:dela="http://sborex.com/dela/schema" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_0umh4rs" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="3.4.0">
+  <bpmn:process id="customer" name="Customer" processType="None" isClosed="false" isExecutable="false">
+    <bpmn:documentation>Customer record lifecycle and interaction process</bpmn:documentation>
+    <bpmn:sequenceFlow id="SequenceFlow_1n32aoo" sourceRef="StartEvent_0tkd0h7" targetRef="Task_1qb7nkw" />
+    <bpmn:sequenceFlow id="SequenceFlow_17b5ej9" sourceRef="ExclusiveGateway_0w35i3x" targetRef="IntermediateThrowEvent_1po23nv" />
+    <bpmn:intermediateCatchEvent id="IntermediateThrowEvent_1po23nv" name="update">
+      <bpmn:incoming>SequenceFlow_17b5ej9</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_0vjd48z</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_076z9sp</bpmn:outgoing>
+      <bpmn:signalEventDefinition signalRef="a87a9fe68-066a-4907-9f11-6118ad78e49b" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_076z9sp" sourceRef="IntermediateThrowEvent_1po23nv" targetRef="Task_0sud9v5" />
+    <bpmn:sequenceFlow id="SequenceFlow_0vjd48z" sourceRef="Task_0sud9v5" targetRef="IntermediateThrowEvent_1po23nv" />
+    <bpmn:startEvent id="StartEvent_0tkd0h7" name="new">
+      <bpmn:outgoing>SequenceFlow_1n32aoo</bpmn:outgoing>
+      <bpmn:signalEventDefinition signalRef="newCustomer" />
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1dsvbp5" sourceRef="ExclusiveGateway_0w35i3x" targetRef="Task_03h46wc" />
+    <bpmn:userTask id="Task_03h46wc" name="Age Question" implementation="##unspecified" dela:permit="">
+      <bpmn:incoming>SequenceFlow_1dsvbp5</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_0lqttxg</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_10ql3pz</bpmn:outgoing>
+      <dela:view type="text/html" code="" permit="fedd">@{fmt.label('age')}: &lt;input type="input" name="age"/&gt;</dela:view>
+      <dela:view type="text/html" code="history" permit="fedd">@{fmt.label('age')}: @{step.historyData.age}</dela:view>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_10ql3pz" sourceRef="Task_03h46wc" targetRef="Task_1va4whm" />
+    <bpmn:userTask id="Task_1va4whm" name="Job Question" implementation="##unspecified" dela:permit="fedd">
+      <bpmn:incoming>SequenceFlow_10ql3pz</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0lqttxg</bpmn:outgoing>
+      <dela:view type="text/html" code="" permit="fedd">@{fmt.label('job')}: &lt;input type="input" name="job"/&gt;</dela:view>
+      <dela:view type="text/html" code="history" permit="fedd">@{fmt.label('job')}: @{step.historyData.job}</dela:view>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0lqttxg" sourceRef="Task_1va4whm" targetRef="Task_03h46wc" />
+    <bpmn:parallelGateway id="ExclusiveGateway_0w35i3x">
+      <bpmn:incoming>SequenceFlow_1ezcvcs</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_17b5ej9</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_1dsvbp5</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_1ezcvcs" sourceRef="Task_1qb7nkw" targetRef="ExclusiveGateway_0w35i3x" />
+    <bpmn:scriptTask id="Task_1qb7nkw" name="Create Customer" scriptFormat="mvel">
+      <bpmn:incoming>SequenceFlow_1n32aoo</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1ezcvcs</bpmn:outgoing>
+      <bpmn:script>sequence.data.put('customer', result.customer)</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:scriptTask id="Task_0sud9v5" name="Append Account" scriptFormat="javascript">
+      <bpmn:incoming>SequenceFlow_076z9sp</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0vjd48z</bpmn:outgoing>
+      <bpmn:script>customer.accounts.addAll(result.customer.accounts);</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:textAnnotation id="TextAnnotation_1fuigo5">
+      <bpmn:text>The customer id was not found</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1nd0srq" associationDirection="None" sourceRef="StartEvent_0tkd0h7" targetRef="TextAnnotation_1fuigo5" />
+    <bpmn:textAnnotation id="TextAnnotation_0a3lb54">
+      <bpmn:text>Associate the customer data with this process instance</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1drtpyr" associationDirection="None" sourceRef="Task_1qb7nkw" targetRef="TextAnnotation_0a3lb54" />
+    <bpmn:textAnnotation id="TextAnnotation_1upifol">
+      <bpmn:text>Question to a customer</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_01y0iy6" associationDirection="None" sourceRef="Task_03h46wc" targetRef="TextAnnotation_1upifol" />
+    <bpmn:textAnnotation id="TextAnnotation_13w3o9u">
+      <bpmn:text>Another question. Know your customer!</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_18khcnr" associationDirection="None" sourceRef="Task_1va4whm" targetRef="TextAnnotation_13w3o9u" />
+    <bpmn:textAnnotation id="TextAnnotation_1e9lse7">
+      <bpmn:text>Existing customer, new account</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1r58zku" associationDirection="None" sourceRef="IntermediateThrowEvent_1po23nv" targetRef="TextAnnotation_1e9lse7" />
+    <bpmn:textAnnotation id="TextAnnotation_1onv8iv">
+      <bpmn:text>Add account data to the customer record</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_19mmfv3" associationDirection="None" sourceRef="Task_0sud9v5" targetRef="TextAnnotation_1onv8iv" />
+    <dela:view type="text/html" permit="fedd">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
+        &lt;meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"&gt;        
+        &lt;title&gt;
+            @{customer.lastName}
+            @{customer.firstName}
+            @{customer.middleName}
+        &lt;/title&gt;
+        &lt;link rel="stylesheet" href="res/w3.css"/&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+
+        &lt;div class="w3-sidebar w3-bar-block w3-collapse w3-card w3-animate-right w3-padding" style="width:310px;right:0px"&gt;
+            &lt;button onclick="this.parentElement.style.display = 'none'" class="w3-bar-item w3-button w3-hide-large"&gt;Close ×&lt;/button&gt;
+            &lt;div&gt;@includeNamed{'customer?dialogue'}&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class="w3-main" style="margin-right:310px"&gt;
+            &lt;div class="w3-container w3-bar w3-blue-gray"&gt;
+                &lt;span class="w3-bar-item"&gt;
+                    @{fmt.label('customer')}
+                &lt;/span&gt;
+                &lt;button onclick="for (let bar of document.getElementsByClassName('w3-sidebar w3-collapse w3-animate-right')) {
+                            bar.style.display = 'block'; }" class="w3-bar-item w3-button w3-hide-large w3-right"&gt;☰&lt;/button&gt;
+                @foreach{locale: fmt.labelLocales}
+                    &lt;button onclick="document.cookie = 'locale=@{locale.toLanguageTag()}; path=/';window.location.reload();" class="w3-bar-item w3-button w3-right"&gt;@{locale.toLanguageTag().toUpperCase()}&lt;/button&gt;
+                @end{}
+            &lt;/div&gt;
+            &lt;div class="w3-row w3-container"&gt;
+                &lt;div class="w3-panel w3-third w3-card-4 w3-xlarge w3-light-gray"&gt;
+                    &lt;b&gt;
+                    @{customer.lastName}&lt;br/&gt;
+                    @{customer.firstName}&lt;br/&gt;
+                    @{customer.middleName}&lt;br/&gt;
+                    @{fmt.uDate(customer.dateOfBirth,"mn")}&lt;/b&gt;
+                &lt;/div&gt;
+                &lt;div class="w3-third w3-panel"&gt;
+                    &lt;!--search for main address--&gt;
+                    &lt;!--TODO: make a function to search tags--&gt;
+                    @code{mainAddress = null}
+                    @foreach{contact: customer.contacts}
+                        @foreach{type: contact.tags}
+                            @if{type=='address'}
+                                @foreach{tag: contact.tags}
+                                    @if{tag=='main'}
+                                        @code{mainAddress = contact}
+                                    @end{}
+                                @end{}                            
+                            @end{}
+                        @end{}                            
+                    @end{}
+                    &lt;div class="w3-card"&gt;
+                        &lt;div class="w3-container w3-light-gray"&gt;
+                            @if{mainAddress==null}
+                                @{fmt.label('addresses')}
+                            @else{}
+                                &lt;span style="font-weight: bolder"&gt;
+                                    @foreach{tag: mainAddress.tags}
+                                        @if{tag!='main' &amp;&amp; tag!='address'}
+                                            @{fmt.label('contact.tag.'+tag+'.abbr')}
+                                        @end{}
+                                    @end{}                            
+                                &lt;/span&gt;
+                                @{fmt.noHtml(mainAddress.address)}
+                            @end{}
+                                &lt;button onclick="if(this.parentElement.nextElementSibling.style.display=='none'){this.parentElement.nextElementSibling.style.display='block';this.innerHTML='&amp;#x25B2;';}else{this.parentElement.nextElementSibling.style.display='none';this.innerHTML='&amp;#x25BC;';}" class="w3-button w3-right"&gt;
+                                    @if{mainAddress!=null}&amp;#x25BC;@else{}&amp;#x25B2;@end{}
+                                &lt;/button&gt;
+                        &lt;/div&gt;                        
+                        &lt;div class="w3-container w3-responsive" style="display:@if{mainAddress!=null}none@else{}block@end{}"&gt;
+                            &lt;table class="w3-table w3-striped w3-small"&gt;
+                                &lt;thead&gt;
+                                    &lt;tr&gt;
+                                        &lt;th scope="col"&gt;@{fmt.label('contact.tag')}&lt;/th&gt;
+                                        &lt;th scope="col"&gt;@{fmt.label('address')}&lt;/th&gt;
+                                    &lt;/tr&gt;
+                                &lt;/thead&gt;              
+                                &lt;tbody&gt;
+                                    @foreach{contact: customer.contacts}
+                                        @foreach{type: contact.tags}
+                                            @if{type=='address'}
+                                            &lt;tr&gt;
+                                                &lt;th scope="row"&gt;
+                                                    @foreach{tag: contact.tags}
+                                                        @if{tag!='main' &amp;&amp; tag!='address'}
+                                                            @{fmt.label('contact.tag.'+tag+'.abbr')}
+                                                        @end{}
+                                                    @end{}                            
+                                                &lt;/th&gt;
+                                                &lt;td&gt;
+                                                    @{fmt.noHtml(contact.address)}
+                                                &lt;/td&gt;
+                                            &lt;/tr&gt;
+                                            @end{}                                                
+                                        @end{}
+                                    @end{}
+                                &lt;/tbody&gt;
+                            &lt;/table&gt;
+                        &lt;/div&gt;                        
+                    &lt;/div&gt;
+                    &lt;!--search for main id--&gt;                
+                    @code{mainIdentifier = null}
+                    @foreach{identifier: customer.identifiers}
+                        @foreach{type: identifier.tags}
+                            @if{type=='main'}
+                                @code{mainIdentifier = identifier}
+                            @end{}
+                        @end{}                            
+                    @end{}
+                    &lt;div class="w3-card"&gt;
+                        &lt;div class="w3-container w3-light-gray"&gt;
+                            @if{mainIdentifier==null}
+                                @{fmt.label('person.identifiers')}
+                            @else{}
+                                &lt;span style="font-weight: bolder"&gt;
+                                    @foreach{tag: mainIdentifier.tags}
+                                        @if{tag!='main'}
+                                            @{fmt.label('person.identifier.tag.'+tag)}
+                                        @end{}
+                                    @end{}                            
+                                &lt;/span&gt;
+                                @{fmt.noHtml(mainIdentifier.number)}
+                            @end{}
+                                &lt;button onclick="if(this.parentElement.nextElementSibling.style.display=='none'){this.parentElement.nextElementSibling.style.display='block';this.innerHTML='&amp;#x25B2;';}else{this.parentElement.nextElementSibling.style.display='none';this.innerHTML='&amp;#x25BC;';}" class="w3-button w3-right"&gt;
+                                    @if{mainIdentifier!=null}&amp;#x25BC;@else{}&amp;#x25B2;@end{}
+                                &lt;/button&gt;
+                        &lt;/div&gt;
+                        &lt;div class="w3-container w3-responsive" style="display:@if{mainIdentifier!=null}none@else{}block@end{}"&gt;
+                            &lt;table class="w3-table w3-striped w3-small"&gt;
+                                &lt;thead&gt;
+                                    &lt;tr&gt;
+                                        &lt;th scope="col"&gt;@{fmt.label('person.identifier.tag')}&lt;/th&gt;
+                                        &lt;th scope="col"&gt;@{fmt.label('person.identifier.number')}&lt;/th&gt;
+                                        &lt;th scope="col"&gt;@{fmt.label('person.identifier.issuer')}&lt;/th&gt;
+                                        &lt;th scope="col"&gt;@{fmt.label('person.identifier.validThru')}&lt;/th&gt;
+                                    &lt;/tr&gt;
+                                &lt;/thead&gt;              
+                                &lt;tbody&gt;
+                                    @foreach{identifier: customer.identifiers}
+                                    &lt;tr&gt;
+                                        &lt;th scope="row"&gt;
+                                            @foreach{tag: identifier.tags}
+                                                @if{tag!='main'}
+                                                    @{fmt.label('person.identifier.tag.'+tag+'.abbr')}
+                                                @end{}    
+                                            @end{}
+                                        &lt;/th&gt;
+                                        &lt;td&gt;@{fmt.noHtml(identifier.number)}&lt;/td&gt;
+                                        &lt;td&gt;
+                                            @{fmt.noHtml(identifier.issuer)}
+                                            @if{identifier.containsKey('issuedOn')}
+                                                &lt;br/&gt;@{fmt.label('person.identifier.issuedOn')}: 
+                                                @{fmt.uDate(identifier.issuedOn,"mn")}
+                                            @end{}
+                                        &lt;/td&gt;
+                                        &lt;td&gt;
+                                            @if{identifier.containsKey('validThru')}
+                                                @{fmt.uDate(identifier.validThru,"mn")}
+                                            @end{}
+                                        &lt;/td&gt;
+                                    &lt;/tr&gt;
+                                    @end{}
+                                &lt;/tbody&gt;
+                            &lt;/table&gt;
+                        &lt;/div&gt;                        
+                    &lt;/div&gt;                        
+                &lt;/div&gt;
+                &lt;div class="w3-third w3-panel"&gt;
+                        @foreach{contact: customer.contacts}
+                            @foreach{type: contact.tags}
+                                @if{type=='phone'}
+                                    &lt;div class="w3-card"&gt;
+                                        &lt;div class="w3-container w3-light-gray"&gt;
+                                            @{fmt.noHtml(contact.address)}
+                                            &lt;button onclick="if(this.parentElement.nextElementSibling.style.display=='none'){this.parentElement.nextElementSibling.style.display='block';this.innerHTML='&amp;#x25B2;';}else{this.parentElement.nextElementSibling.style.display='none';this.innerHTML='&amp;#x25BC;';}" class="w3-button w3-right"&gt;
+                                                &amp;#x25BC;
+                                            &lt;/button&gt;
+                                        &lt;/div&gt;
+                                        &lt;div class="w3-container w3-responsive" style="display:none"&gt;
+                                            @foreach{tag: contact.tags}
+                                                @if{tag!='phone'}
+                                                    @{fmt.label('contact.tag.'+tag)}
+                                                @end{}
+                                            @end{}
+                                        &lt;/div&gt;
+                                    &lt;/div&gt;
+                                @end{}
+                            @end{}
+                        @end{}
+                &lt;/div&gt;
+            &lt;/div&gt;
+            
+            @foreach{account: customer.accounts}
+                &lt;div class="w3-card"&gt;
+                    &lt;div class="w3-container w3-blue-gray"&gt;
+                        @{fmt.label('account')}
+                        @{fmt.noHtml(account.id)}
+                        @{fmt.label('balance.arrears')}
+                        @{fmt.number(account.balances.arrears.balance)}
+                        @{fmt.label('currency.'+account.balances.arrears.currency+'.abbr')}
+                        &lt;button onclick="if(this.parentElement.nextElementSibling.style.display=='none'){this.parentElement.nextElementSibling.style.display='block';this.innerHTML='&amp;#x25B2;';}else{this.parentElement.nextElementSibling.style.display='none';this.innerHTML='&amp;#x25BC;';}" class="w3-button w3-right"&gt;
+                            &amp;#x25BC;
+                        &lt;/button&gt;
+                    &lt;/div&gt;
+                    &lt;div class="w3-container w3-responsive" style="display:none"&gt;
+                        &lt;div class="w3-row"&gt;
+                            &lt;div class="w3-third"&gt;
+                                &lt;table class="w3-panel w3-card w3-table w3-small"&gt;
+                                    &lt;tbody&gt;
+                                        &lt;tr&gt;
+                                            &lt;th scope="row" class="w3-right-align"&gt;
+                                                @{fmt.label('account.identifier')}
+                                            &lt;/th&gt;
+                                            &lt;td&gt;@{fmt.noHtml(account.id)}&lt;/td&gt;
+                                        &lt;/tr&gt;
+                                        &lt;tr&gt;
+                                            &lt;th scope="row" class="w3-right-align"&gt;
+                                                @{fmt.label('date')}
+                                            &lt;/th&gt;
+                                            &lt;td&gt;
+                                                @{fmt.uDate(account.dateOpen, "mn")}
+                                            &lt;/td&gt;
+                                        &lt;/tr&gt;
+                                        &lt;tr&gt;
+                                            &lt;th scope="row" class="w3-right-align"&gt;
+                                                @{fmt.label('account.product')}
+                                            &lt;/th&gt;
+                                            &lt;td&gt;
+                                                @if{account.product==null}
+                                                    --
+                                                @else{}
+                                                    @{account.product}
+                                                @end{}
+                                            &lt;/td&gt;
+                                        &lt;/tr&gt;
+                                        &lt;tr&gt;
+                                            &lt;th scope="row" class="w3-right-align"&gt;
+                                                @{fmt.label('balance.loanAmount')}
+                                            &lt;/th&gt;
+                                            &lt;td&gt;
+                                                @if{account.balances.loanAmount.balance==null}
+                                                    --
+                                                @else{}
+                                                    @{fmt.number(account.balances.loanAmount.balance)}
+                                                    @{fmt.label('currency.'+account.balances.loanAmount.currency+'.abbr')}
+                                                @end{}
+                                            &lt;/td&gt;
+                                        &lt;/tr&gt;
+                                    &lt;/tbody&gt;                                        
+                                &lt;/table&gt;    
+                            &lt;/div&gt;
+                            &lt;div class="w3-panel w3-third w3-card"&gt;
+                                
+                                &lt;table class="w3-table w3-small w3-bordered"&gt;
+                                    &lt;tbody&gt;
+                                        @foreach{balance: account.balances.entrySet()}
+                                            @if{balance.value.balance!=null}
+                                                &lt;tr&gt;
+                                                    &lt;th scope="row" class="w3-right-align"&gt;
+                                                        @{fmt.label('balance.'+balance.key), balance.key}
+                                                    &lt;/th&gt;
+                                                    &lt;td class="w3-right-align"&gt;
+                                                        @{fmt.number(balance.value.balance)}
+                                                        @{fmt.label('currency.'+balance.value.currency+'.abbr')}
+                                                    &lt;/td&gt;
+                                                &lt;/tr&gt;
+                                            @end{}
+                                        @end{}
+                                    &lt;/tbody&gt;                                        
+                                &lt;/table&gt;
+
+                            &lt;/div&gt;
+                            &lt;div class="w3-panel w3-third w3-card"&gt;
+                                
+                                &lt;table class="w3-table w3-small"&gt;
+                                    &lt;tbody&gt;
+                                        &lt;tr&gt;
+                                            &lt;th scope="row"&gt;
+                                                @{fmt.label('account.identifier')}
+                                            &lt;/th&gt;
+                                            &lt;td&gt;@{fmt.noHtml(account.id)}&lt;/td&gt;
+                                        &lt;/tr&gt;
+                                    &lt;/tbody&gt;                                        
+                                &lt;/table&gt;
+
+                            &lt;/div&gt;
+                            
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            @end{}
+        &lt;/div&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</dela:view>
+    <dela:view type="text/html" code="dialogue" permit="fedd">&lt;script src="/res/dialogue.js"&gt;&lt;/script&gt;
+        
+        @foreach{step: sequence.status}
+            @if{step.item.tagName=='userTask'}
+                &lt;form onsubmit="return completeAction(event);" action="@{step.id}" method="post"&gt; 
+                   @includeNamed{'customer/'+step.item.getAttribute('name')}
+                   &lt;input type="submit"/&gt;
+                &lt;/form&gt;
+            @end{}
+        @end{}
+        
+        @foreach{step: sequence.history}
+            @if{step.item.tagName=='userTask'}
+                &lt;div&gt;@includeNamed{'customer/'+step.item.getAttribute('name')+'?history'}&lt;hr/&gt;&lt;/div&gt;
+            @end{}
+        @end{}</dela:view>
+    <dela:view type="text/html" code="listitem" permit="fedd">@{customer.lastName}
+        @{customer.firstName}
+        @{customer.middleName},
+        @{fmt.uDate(customer.dateOfBirth, "mn")},
+        @{customer.accounts.size()} accounts</dela:view>
+    <dela:bean code="labels" language="mvel">exchangeWebService.formatter.addLabels('ru', [
+'age': 'Возраст',
+'job': 'Работа',        
+        
+'customer': 'Клиент',
+'customers': 'Клиенты',
+'account': 'Договор',
+'accounts': 'Договоры',
+'phone': 'Телефон',
+'phones': 'Телефоны',
+
+'date': 'Дата',
+
+
+'person.identifier': 'Документ',
+'person.identifiers': 'Документы',
+'person.identifier.number': 'Номер',
+'person.identifier.issuer': 'Выдавший орган',
+'person.identifier.issuedOn': 'Дата выдачи',
+'person.identifier.validThru': 'Действителен по',
+
+
+'account.identifier': 'Номер договора',
+'account.identifiers': 'Номера договоров',
+'account.product': 'Продукт',
+
+
+
+'person.tag': 'Тип',
+'person.tag.individual': 'Физическое лицо',
+'person.tag.individual.abbr': 'ф.л',
+
+'person.identifier.tag': 'Тип',
+'person.identifier.tag.main': 'Основной',
+'person.identifier.tag.main.abbr': 'осн',
+'person.identifier.tag.internalPassport': 'Паспорт',
+'person.identifier.tag.internalPassport.abbr': 'пасп',
+'person.identifier.tag.internalPassport.short': 'Паспорт',
+'person.identifier.tag.passport': 'Заграничный паспорт',
+'person.identifier.tag.passport.abbr': 'загр.пасп',
+'person.identifier.tag.passport.short': 'Загранпаспорт',
+
+'contact.tag': 'Тип',
+'contact.tag.phone': 'Телефон',
+'contact.tag.phone.abbr': 'тел',
+'contact.tag.address': 'Адрес',
+'contact.tag.address.abbr': 'адр',
+
+'contact.tag.main': 'Основной',
+'contact.tag.main.abbr': 'осн',
+'contact.tag.registration': 'Регистрации',
+'contact.tag.registration.abbr': 'рег',
+
+'contact.tag.home': 'Домашний',
+'contact.tag.home.abbr': 'дом',
+'contact.tag.work': 'Рабочий',
+'contact.tag.work.abbr': 'раб',
+
+'contact.tag.mobile': 'Мобильный',
+'contact.tag.mobile.abbr': 'моб',
+'contact.tag.landline': 'Стационарный',
+'contact.tag.landline.abbr': 'стц',
+
+'currency': 'Валюта',
+'currency.RUR': 'Российский рубль',
+'currency.RUR.abbr': 'руб',
+'currency.EUR': 'Евро',
+'currency.EUR.abbr': 'евро',
+'currency.USD': 'Доллар США',
+'currency.USD.abbr': 'долл',
+'currency.GBP': 'Британский фунт',
+'currency.GBP.abbr': 'фнт',
+
+'addresses': 'Адреса',
+'address': 'Адрес',
+
+
+'balance.loanAmount': 'Сумма кредита',
+'balance.arrears': 'Просроченная задолженность',
+'balance.principalDebt': 'Основной долг',
+'balance.fee': 'Комиссии',
+'balance.fine': 'Пени',
+'balance.penalty': 'Штрафы',
+'balance.outstanding': 'Задолженность'
+        ]);
+        exchangeWebService.formatter.addLabels('en', [
+'age': 'Age',
+'job': 'Job',        
+        
+'customer': 'Customer',
+'address': 'Address',
+'addresses': 'Addresses',
+'currency.RUR': 'Russian Ruble',
+'currency.RUR.abbr': 'rub',
+'currency.EUR': 'Euro',
+'currency.EUR.abbr': 'euro',
+'currency.USD': 'US Dollar',
+'currency.USD.abbr': 'dol',
+'currency.GBP': 'Brithsh Pound',
+'currency.GBP.abbr': 'pnd',
+'customers': 'Customers',
+'account': 'Account',
+'accounts': 'Accounts',
+'phone': 'Phone',
+'phones': 'Phones',
+'person.identifier': 'Identification',
+'person.identifiers': 'Identifications',
+'account.identifier': 'Account Number',
+'account.identifiers': 'Account Numbers',
+'person.tag.individual': 'Individual',
+'person.tag.individual.abbr': 'ind',
+'person.tag': 'Type',
+'person.identifier.tag.internalPassport': 'Internal Passport',
+'person.identifier.tag.internalPassport.abbr': 'int.passp.',
+'person.identifier.tag.internalPassport.short': 'Internal Passport',
+'person.identifier.tag.passport': 'Passport',
+'person.identifier.tag.passport.abbr': 'pass',
+'person.identifier.tag.passport.short': 'Passport',
+'contact.tag': 'Type',
+'contact.tag.phone': 'Phone',
+'contact.tag.address': 'Address',
+'contact.tag.main': 'Default',
+'contact.tag.main.abbr': 'def',
+'contact.tag.home': 'Home',
+'contact.tag.home.abbr': 'h',
+'contact.tag.work': 'Work',
+'contact.tag.work.abbr': 'w',
+'contact.tag.mobile': 'Mobile',
+'contact.tag.mobile.abbr': 'm',
+'contact.tag.landline': 'Landline',
+'contact.tag.landline.abbr': 'l',
+'currency': 'Currency',
+'person.identifier.tag': 'Type',
+'person.identifier.tag.main': 'Main',
+'person.identifier.tag.main.abbr': 'main',
+'contact.tag.phone.abbr': 'ph',
+'contact.tag.address.abbr': 'addr',
+'contact.tag.registration': 'Registration',
+'contact.tag.registration.abbr': 'reg',
+'balance.loanAmount': 'Loan Amount',
+'balance.arrears': 'Arrears',
+'balance.principalDebt': 'Principal Debt',
+'balance.fee': 'Fee',
+'balance.fine': 'Fine',
+'balance.penalty': 'Penalty',
+'balance.outstanding': 'Outstanding',
+'date': 'Date',
+'account.product': 'Product',
+'person.identifier.issuedOn': 'Issued',
+'person.identifier.issuer': 'Issuer',
+'person.identifier.number': 'Number',
+'person.identifier.validThru': 'Valid Thru'                
+        ]);
+        
+ exchangeWebService.formatter.addLabels('fr', [   
+'age': 'Âge',
+'job': 'Travail',
+
+'customer': 'Client',
+'customers': 'Clients',
+'account': 'Compte',
+'accounts': 'Comptes',
+'phone': 'Téléphone',
+'phones': 'Téléphones',
+
+'date': 'Date',
+
+
+'person.identifier': "Carte d'identité",
+'person.identifiers': "Cartes d'identité",
+'person.identifier.number': 'Numéro',
+'person.identifier.issuer': 'Organe de délivrance',
+'person.identifier.issuedOn': 'Délivré',
+'person.identifier.validThru': 'Valable jusque',
+
+
+'account.identifier': 'Numéro du compte',
+'account.identifiers': 'Numéros des comptes',
+'account.product': 'Produit',
+
+
+
+'person.tag': 'Type',
+'person.tag.individual': 'Individu',
+'person.tag.individual.abbr': 'ind',
+
+'person.identifier.tag': 'Type',
+'person.identifier.tag.main': 'Principal',
+'person.identifier.tag.main.abbr': 'princ',
+'person.identifier.tag.internalPassport': 'Passeport',
+'person.identifier.tag.internalPassport.abbr': 'passep.',
+'person.identifier.tag.internalPassport.short': 'Passeport',
+'person.identifier.tag.passport': 'Passeport étranger',
+'person.identifier.tag.passport.abbr': 'passep. étr.',
+'person.identifier.tag.passport.short': 'Passeport étranger',
+
+'contact.tag': 'Type',
+'contact.tag.phone': 'Téléphone',
+'contact.tag.phone.abbr': 'ph',
+'contact.tag.address': 'Adresse',
+'contact.tag.address.abbr': 'adr',
+
+'contact.tag.main': 'Principal',
+'contact.tag.main.abbr': 'princ',
+'contact.tag.registration': 'Régistration',
+'contact.tag.registration.abbr': 'reg',
+
+'contact.tag.home': 'Domicile',
+'contact.tag.home.abbr': 'd',
+'contact.tag.work': 'Professionel',
+'contact.tag.work.abbr': 'p',
+
+'contact.tag.mobile': 'Portable',
+'contact.tag.mobile.abbr': 'p',
+'contact.tag.landline': 'Fixe',
+'contact.tag.landline.abbr': 'f',
+
+'currency': 'Devise',
+'currency.RUR': 'Rouble Russe',
+'currency.RUR.abbr': 'roub',
+'currency.EUR': 'Euro',
+'currency.EUR.abbr': 'euro',
+'currency.USD': 'US Dollar',
+'currency.USD.abbr': 'dol',
+'currency.GBP': 'Livre sterling',
+'currency.GBP.abbr': 'lvr',
+
+'addresses': 'Adresses',
+'address': 'Adresse',
+
+
+'balance.loanAmount': 'Montant du crédit',
+'balance.arrears': 'Arriérés',
+'balance.principalDebt': 'Dette principale ',
+'balance.fee': 'Frais',
+'balance.fine': 'Peine pécuniaire',
+'balance.penalty': 'Amende',
+'balance.outstanding': 'Endettement'  
+    ]);
+ exchangeWebService.formatter.addLabels('de', [   
+ 'age': 'Alter',
+'job': 'Arbeit',
+
+'customer': 'Kunde',
+'customers': 'Kunden',
+'account': 'Konto',
+'accounts': 'Konten',
+'phone': 'Telefon',
+'phones': 'Telefons',
+
+'date': 'Datum',
+
+
+'person.identifier': 'Personalausweis',
+'person.identifiers': 'Personalausweise',
+'person.identifier.number': 'Nummer',
+'person.identifier.issuer': 'Ausstellende Behörde',
+'person.identifier.issuedOn': 'Ausgestellt',
+'person.identifier.validThru': 'Gültig bis',
+
+
+'account.identifier': 'Kontonummer',
+'account.identifiers': 'Kontonummern',
+'account.product': 'Produkt',
+
+
+
+'person.tag': 'Typ',
+'person.tag.individual': 'Natürliche Person',
+'person.tag.individual.abbr': 'nat. Pers.',
+
+'person.identifier.tag': 'Typ',
+'person.identifier.tag.main': 'Grundlegende',
+'person.identifier.tag.main.abbr': 'grundl.',
+'person.identifier.tag.internalPassport': 'Inlandspaß',
+'person.identifier.tag.internalPassport.abbr': 'In.paß',
+'person.identifier.tag.internalPassport.short': 'Inlandspaß',
+'person.identifier.tag.passport': 'Auslandspaß',
+'person.identifier.tag.passport.abbr': 'Aus.paß',
+'person.identifier.tag.passport.short': 'Auslandspaß',
+
+'contact.tag': 'Typ',
+'contact.tag.phone': 'Telefon',
+'contact.tag.phone.abbr': 'tel',
+'contact.tag.address': 'Adresse',
+'contact.tag.address.abbr': 'adr',
+
+'contact.tag.main': 'Grundlegende',
+'contact.tag.main.abbr': 'grundl',
+'contact.tag.registration': 'Anmeldung',
+'contact.tag.registration.abbr': 'Anm',
+
+'contact.tag.home': 'Haustelefon',
+'contact.tag.home.abbr': 'h',
+'contact.tag.work': 'Geschäftstelefon',
+'contact.tag.work.abbr': 'g',
+
+'contact.tag.mobile': 'Mobiltelefon',
+'contact.tag.mobile.abbr': 'm',
+'contact.tag.landline': 'Festnetztelefon',
+'contact.tag.landline.abbr': 'f',
+
+'currency': 'Währung',
+'currency.RUR': 'Russischer Rubel',
+'currency.RUR.abbr': 'Rub',
+'currency.EUR': 'Euro',
+'currency.EUR.abbr': 'Euro',
+'currency.USD': 'US Dollar',
+'currency.USD.abbr': 'Dol',
+'currency.GBP': 'Britisches Pfund',
+'currency.GBP.abbr': 'pfd',
+
+'addresses': 'Adressen',
+'address': 'Adresse',
+
+
+'balance.loanAmount': 'Kredithöhe',
+'balance.arrears': 'Überfällige Verschuldung',
+'balance.principalDebt': 'Hauptschuld',
+'balance.fee': 'Vermittlungsgebühr',
+'balance.fine': 'Pönale',
+'balance.penalty': 'Strafe',
+'balance.outstanding': 'Verschuldung'
+    ]);</dela:bean>
+  </bpmn:process>
+  <bpmn:signal id="a87a9fe68-066a-4907-9f11-6118ad78e49b" name="updateCustomer_@{customer.id}" />
+  <bpmn:signal id="newCustomer" name="newCustomer" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="customer">
+      <bpmndi:BPMNShape id="TextAnnotation_1fuigo5_di" bpmnElement="TextAnnotation_1fuigo5">
+        <dc:Bounds x="175" y="141" width="100" height="41" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_0a3lb54_di" bpmnElement="TextAnnotation_0a3lb54">
+        <dc:Bounds x="335" y="111" width="167" height="43" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1upifol_di" bpmnElement="TextAnnotation_1upifol">
+        <dc:Bounds x="585" y="111" width="100" height="41" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_13w3o9u_di" bpmnElement="TextAnnotation_13w3o9u">
+        <dc:Bounds x="755" y="111" width="100" height="55" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1e9lse7_di" bpmnElement="TextAnnotation_1e9lse7">
+        <dc:Bounds x="505" y="304" width="100" height="55" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1onv8iv_di" bpmnElement="TextAnnotation_1onv8iv">
+        <dc:Bounds x="525" y="381" width="173" height="35" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_17b5ej9_di" bpmnElement="SequenceFlow_17b5ej9">
+        <di:waypoint x="402" y="265" />
+        <di:waypoint x="402" y="314" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0vjd48z_di" bpmnElement="SequenceFlow_0vjd48z">
+        <di:waypoint x="352" y="436" />
+        <di:waypoint x="302" y="436" />
+        <di:waypoint x="302" y="332" />
+        <di:waypoint x="384" y="332" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_076z9sp_di" bpmnElement="SequenceFlow_076z9sp">
+        <di:waypoint x="402" y="350" />
+        <di:waypoint x="402" y="396" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1n32aoo_di" bpmnElement="SequenceFlow_1n32aoo">
+        <di:waypoint x="175" y="240" />
+        <di:waypoint x="234" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1dsvbp5_di" bpmnElement="SequenceFlow_1dsvbp5">
+        <di:waypoint x="427" y="240" />
+        <di:waypoint x="477" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0lqttxg_di" bpmnElement="SequenceFlow_0lqttxg">
+        <di:waypoint x="650" y="252" />
+        <di:waypoint x="577" y="252" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_10ql3pz_di" bpmnElement="SequenceFlow_10ql3pz">
+        <di:waypoint x="577" y="226" />
+        <di:waypoint x="650" y="226" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1ezcvcs_di" bpmnElement="SequenceFlow_1ezcvcs">
+        <di:waypoint x="334" y="240" />
+        <di:waypoint x="377" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateCatchEvent_14kc4pm_di" bpmnElement="IntermediateThrowEvent_1po23nv">
+        <dc:Bounds x="384" y="314" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="418" y="304" width="34" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1goog8w_di" bpmnElement="StartEvent_0tkd0h7">
+        <dc:Bounds x="139" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="147" y="265" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_1jggbzb_di" bpmnElement="Task_03h46wc">
+        <dc:Bounds x="477" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_13ng4s0_di" bpmnElement="Task_1va4whm">
+        <dc:Bounds x="650" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ParallelGateway_1s7iikn_di" bpmnElement="ExclusiveGateway_0w35i3x">
+        <dc:Bounds x="377" y="215" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_1hvd2kk_di" bpmnElement="Task_1qb7nkw">
+        <dc:Bounds x="234" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_0sk0gkr_di" bpmnElement="Task_0sud9v5">
+        <dc:Bounds x="352" y="396" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1r58zku_di" bpmnElement="Association_1r58zku">
+        <di:waypoint x="420" y="330" />
+        <di:waypoint x="505" y="323" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_1nd0srq_di" bpmnElement="Association_1nd0srq">
+        <di:waypoint x="168" y="226" />
+        <di:waypoint x="204" y="182" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_01y0iy6_di" bpmnElement="Association_01y0iy6">
+        <di:waypoint x="565" y="200" />
+        <di:waypoint x="610" y="152" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_18khcnr_di" bpmnElement="Association_18khcnr">
+        <di:waypoint x="737" y="200" />
+        <di:waypoint x="768" y="166" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_1drtpyr_di" bpmnElement="Association_1drtpyr">
+        <di:waypoint x="319" y="200" />
+        <di:waypoint x="360" y="154" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_19mmfv3_di" bpmnElement="Association_19mmfv3">
+        <di:waypoint x="452" y="425" />
+        <di:waypoint x="525" y="408" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

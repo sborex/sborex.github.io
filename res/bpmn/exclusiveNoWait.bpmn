@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_00deayf" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="6.4.0">
+  <bpmn:message id="startMessage" name="rest:get:/test/xnw/gatewayStart/{pathWay}" />
+  <bpmn:process id="Process_1hyy7nu" processType="None" isClosed="false" isExecutable="false">
+    <bpmn:sequenceFlow id="Flow_0wmses4" sourceRef="StartEvent_0tqg21i" targetRef="Gateway_1m5nq9e" />
+    <bpmn:sequenceFlow id="Flow_0x9lwly" sourceRef="Gateway_1m5nq9e" targetRef="Activity_0suiwef">
+      <bpmn:conditionExpression type="tFormalExpression">exchange.in.headers.pathWay=='upper'</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:scriptTask id="Activity_0suiwef" name="Upper Script" scriptFormat="javascript">
+      <bpmn:incoming>Flow_0x9lwly</bpmn:incoming>
+      <bpmn:outgoing>Flow_14sm1ls</bpmn:outgoing>
+      <bpmn:script>
+                print("Upper Script Called. Process started with pathWay=" + exchange.in.headers.pathWay);
+                exchange.in.body = exchange.in.body==null?"":exchange.in.body + " UPPER ";
+            </bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_0sdr6zw" sourceRef="Gateway_1m5nq9e" targetRef="Activity_1hgha6p">
+      <bpmn:conditionExpression type="tFormalExpression">exchange.in.headers.pathWay=='lower'</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:scriptTask id="Activity_1hgha6p" name="Lower Script" scriptFormat="javascript">
+      <bpmn:incoming>Flow_0sdr6zw</bpmn:incoming>
+      <bpmn:outgoing>Flow_0zmirle</bpmn:outgoing>
+      <bpmn:script>
+                print("Lower Script Called. Process started with pathWay=" + exchange.in.headers.pathWay);
+                exchange.in.body = exchange.in.body==null?"":exchange.in.body + " LOWER ";
+            </bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_14sm1ls" sourceRef="Activity_0suiwef" targetRef="Gateway_05lzzuf" />
+    <bpmn:sequenceFlow id="Flow_0zmirle" sourceRef="Activity_1hgha6p" targetRef="Gateway_05lzzuf" />
+    <bpmn:scriptTask id="Activity_0k2wks2" name="Concluding Script" scriptFormat="javascript">
+      <bpmn:incoming>Flow_08i7wjv</bpmn:incoming>
+      <bpmn:outgoing>Flow_112ck5x</bpmn:outgoing>
+      <bpmn:script>
+                print("Concluding Script Called. Process started with pathWay=" + exchange.in.headers.pathWay);
+                exchange.in.body = exchange.in.body + ". Conclude. Called with "+ exchange.in.headers.pathWay;
+            </bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="Event_1lebgc5">
+      <bpmn:incoming>Flow_112ck5x</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_112ck5x" sourceRef="Activity_0k2wks2" targetRef="Event_1lebgc5" />
+    <bpmn:exclusiveGateway id="Gateway_1m5nq9e" default="Flow_0x9lwly">
+      <bpmn:incoming>Flow_0wmses4</bpmn:incoming>
+      <bpmn:outgoing>Flow_0x9lwly</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0sdr6zw</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1nl8myp</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Gateway_05lzzuf">
+      <bpmn:incoming>Flow_14sm1ls</bpmn:incoming>
+      <bpmn:incoming>Flow_0zmirle</bpmn:incoming>
+      <bpmn:incoming>Flow_095q5b1</bpmn:incoming>
+      <bpmn:outgoing>Flow_08i7wjv</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:startEvent id="StartEvent_0tqg21i">
+      <bpmn:outgoing>Flow_0wmses4</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1olzp5i" messageRef="startMessage" />
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1nl8myp" sourceRef="Gateway_1m5nq9e" targetRef="Activity_18k2xjl">
+      <bpmn:conditionExpression type="tFormalExpression">exchange.in.headers.pathWay=='lower' || exchange.in.headers.pathWay=='middle' || exchange.in.headers.pathWay=='upper'</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:scriptTask id="Activity_18k2xjl" name="Middle Script" scriptFormat="javascript">
+      <bpmn:incoming>Flow_1nl8myp</bpmn:incoming>
+      <bpmn:outgoing>Flow_095q5b1</bpmn:outgoing>
+      <bpmn:script>
+                print("Middle Script Called. Process started with pathWay=" + exchange.in.headers.pathWay);
+                exchange.in.body = exchange.in.body==null?"":exchange.in.body + " MIDDLE ";
+            </bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_095q5b1" sourceRef="Activity_18k2xjl" targetRef="Gateway_05lzzuf" />
+    <bpmn:sequenceFlow id="Flow_08i7wjv" sourceRef="Gateway_05lzzuf" targetRef="Activity_0k2wks2" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1hyy7nu">
+      <bpmndi:BPMNEdge id="Flow_08i7wjv_di" bpmnElement="Flow_08i7wjv">
+        <di:waypoint x="555" y="230" />
+        <di:waypoint x="610" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_095q5b1_di" bpmnElement="Flow_095q5b1">
+        <di:waypoint x="450" y="230" />
+        <di:waypoint x="505" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1nl8myp_di" bpmnElement="Flow_1nl8myp">
+        <di:waypoint x="295" y="230" />
+        <di:waypoint x="350" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_112ck5x_di" bpmnElement="Flow_112ck5x">
+        <di:waypoint x="710" y="230" />
+        <di:waypoint x="772" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0zmirle_di" bpmnElement="Flow_0zmirle">
+        <di:waypoint x="450" y="340" />
+        <di:waypoint x="530" y="340" />
+        <di:waypoint x="530" y="255" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14sm1ls_di" bpmnElement="Flow_14sm1ls">
+        <di:waypoint x="450" y="120" />
+        <di:waypoint x="530" y="120" />
+        <di:waypoint x="530" y="205" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0sdr6zw_di" bpmnElement="Flow_0sdr6zw">
+        <di:waypoint x="270" y="255" />
+        <di:waypoint x="270" y="340" />
+        <di:waypoint x="350" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0x9lwly_di" bpmnElement="Flow_0x9lwly">
+        <di:waypoint x="270" y="205" />
+        <di:waypoint x="270" y="120" />
+        <di:waypoint x="350" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wmses4_di" bpmnElement="Flow_0wmses4">
+        <di:waypoint x="192" y="230" />
+        <di:waypoint x="245" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_19eln30_di" bpmnElement="Activity_0suiwef">
+        <dc:Bounds x="350" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0r67y6i_di" bpmnElement="Activity_1hgha6p">
+        <dc:Bounds x="350" y="300" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_12ibpn6_di" bpmnElement="Activity_0k2wks2">
+        <dc:Bounds x="610" y="190" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1lebgc5_di" bpmnElement="Event_1lebgc5">
+        <dc:Bounds x="772" y="212" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0sdjbdt_di" bpmnElement="Gateway_1m5nq9e" isMarkerVisible="true">
+        <dc:Bounds x="245" y="205" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1kevhym_di" bpmnElement="Gateway_05lzzuf" isMarkerVisible="true">
+        <dc:Bounds x="505" y="205" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1cxnmho_di" bpmnElement="StartEvent_0tqg21i">
+        <dc:Bounds x="156" y="212" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_18wpw2c_di" bpmnElement="Activity_18k2xjl">
+        <dc:Bounds x="350" y="190" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

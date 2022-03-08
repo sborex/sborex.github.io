@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:dela="http://sborex.com/dela/schema" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_13cke21" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="4.0.0">
+  <bpmn:process id="Process_0fswl2t" name="Sip Server" processType="None" isClosed="false" isExecutable="false">
+    <bpmn:documentation>A small sip server attempt, based on github.com/vsetec/camel-sip</bpmn:documentation>
+    <bpmn:startEvent id="StartEvent_1j8tp9i" name="register">
+      <bpmn:outgoing>Flow_1sc84ur</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="a7430a8a5-f6dd-4b1e-8592-edc7a63fb31e" />
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1sc84ur" sourceRef="StartEvent_1j8tp9i" targetRef="Event_038ujec" />
+    <bpmn:endEvent id="Event_038ujec" name="respond 200">
+      <bpmn:incoming>Flow_1sc84ur</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1bjko97" messageRef="a7d6bed1c-1f0b-4ef4-ab2d-fcdf82ddb7fc" />
+    </bpmn:endEvent>
+    <bpmn:startEvent id="Event_0qp769n" name="invite">
+      <bpmn:outgoing>Flow_1iweokr</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1ptjwxl" messageRef="ab2d51cc2-2221-4f08-bd31-ef4acc8b6cfb" />
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1iweokr" sourceRef="Event_0qp769n" targetRef="Event_10uao8u" />
+    <bpmn:intermediateThrowEvent id="Event_10uao8u" name="respond 100">
+      <bpmn:incoming>Flow_1iweokr</bpmn:incoming>
+      <bpmn:outgoing>Flow_0p4yxw5</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0or8pzg" messageRef="ae4ee60a5-5545-431c-b3bf-684d03911f23" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="Flow_0p4yxw5" sourceRef="Event_10uao8u" targetRef="Event_0655fla" />
+    <bpmn:endEvent id="Event_0655fla" name="forward">
+      <bpmn:incoming>Flow_0p4yxw5</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0j0l63n" messageRef="a32c8a106-f4ed-4276-94c2-f1380cd7df07" />
+    </bpmn:endEvent>
+    <bpmn:startEvent id="Event_06dc6r4" name="other">
+      <bpmn:outgoing>Flow_0ld6gi2</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1cs7kmm" messageRef="a434c151f-3809-4df7-aa10-3709b5465923" />
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0ld6gi2" sourceRef="Event_06dc6r4" targetRef="Event_0hanmxt" />
+    <bpmn:endEvent id="Event_0hanmxt" name="forward">
+      <bpmn:incoming>Flow_0ld6gi2</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_02lsx1o" messageRef="aa89c6e87-c54f-4788-95eb-5ccb7b4e2d99" />
+    </bpmn:endEvent>
+    <bpmn:textAnnotation id="TextAnnotation_1j3r461">
+      <bpmn:text>If we respond with status 200, the internal registry adds this phone record</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_11nti05" associationDirection="None" sourceRef="Event_038ujec" targetRef="TextAnnotation_1j3r461" />
+    <bpmn:textAnnotation id="TextAnnotation_1vlpdik">
+      <bpmn:text>sip:proxy just forwards the request per the internal registry or started dialog</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_02i2nv5" associationDirection="None" sourceRef="Event_0655fla" targetRef="TextAnnotation_1vlpdik" />
+    <bpmn:association id="Association_1oh0dbp" associationDirection="None" sourceRef="Event_0hanmxt" targetRef="TextAnnotation_1vlpdik" />
+    <bpmn:textAnnotation id="TextAnnotation_0ii6ash">
+      <bpmn:text>Override the {{host}} and {{sip.port}} properties by launching the system with -Dintegration.host=... and -Dintegration.sip.port=... arguments</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1k9502s" associationDirection="None" sourceRef="Event_06dc6r4" targetRef="TextAnnotation_0ii6ash" />
+    <dela:bean code="sip" language="mvel">new com.vsetec.camel.sip.SipComponent(exchangeService.camelContext, "gov.nist", ["gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY": "gov.nist.javax.sip.stack.NioMessageProcessorFactory"], null)</dela:bean>
+  </bpmn:process>
+  <bpmn:message id="a7430a8a5-f6dd-4b1e-8592-edc7a63fb31e" name="sip:udp://{{host}}:{{sip.port}}?requestMethod=REGISTER" />
+  <bpmn:message id="a7d6bed1c-1f0b-4ef4-ab2d-fcdf82ddb7fc" name="sip:respond?responseCode=200" />
+  <bpmn:message id="ab2d51cc2-2221-4f08-bd31-ef4acc8b6cfb" name="sip:udp://{{host}}:{{sip.port}}?requestMethod=INVITE" />
+  <bpmn:message id="ae4ee60a5-5545-431c-b3bf-684d03911f23" name="sip:respond?responseCode=100" />
+  <bpmn:message id="a32c8a106-f4ed-4276-94c2-f1380cd7df07" name="sip:proxy" />
+  <bpmn:message id="a434c151f-3809-4df7-aa10-3709b5465923" name="sip:udp://{{host}}:{{sip.port}}?requestMethodNot=REGISTER&#38;requestMethodNot=INVITE" />
+  <bpmn:message id="aa89c6e87-c54f-4788-95eb-5ccb7b4e2d99" name="sip:proxy" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0fswl2t">
+      <bpmndi:BPMNShape id="TextAnnotation_1j3r461_di" bpmnElement="TextAnnotation_1j3r461">
+        <dc:Bounds x="350" y="110" width="220" height="40" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1vlpdik_di" bpmnElement="TextAnnotation_1vlpdik">
+        <dc:Bounds x="400" y="250" width="150" height="58" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_0ii6ash_di" bpmnElement="TextAnnotation_0ii6ash">
+        <dc:Bounds x="230" y="350" width="460" height="40" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1sc84ur_di" bpmnElement="Flow_1sc84ur">
+        <di:waypoint x="188" y="110" />
+        <di:waypoint x="242" y="110" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1iweokr_di" bpmnElement="Flow_1iweokr">
+        <di:waypoint x="188" y="200" />
+        <di:waypoint x="242" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0p4yxw5_di" bpmnElement="Flow_0p4yxw5">
+        <di:waypoint x="278" y="200" />
+        <di:waypoint x="332" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ld6gi2_di" bpmnElement="Flow_0ld6gi2">
+        <di:waypoint x="188" y="290" />
+        <di:waypoint x="242" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="StartEvent_1tzg1nq_di" bpmnElement="StartEvent_1j8tp9i">
+        <dc:Bounds x="152" y="92" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="152" y="135" width="37" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0r9s8bb_di" bpmnElement="Event_038ujec">
+        <dc:Bounds x="242" y="92" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="229" y="135" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_03x0ksh_di" bpmnElement="Event_0qp769n">
+        <dc:Bounds x="152" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="157" y="225" width="26" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1u2f1i4_di" bpmnElement="Event_10uao8u">
+        <dc:Bounds x="242" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="229" y="225" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0lxrfpl_di" bpmnElement="Event_0655fla">
+        <dc:Bounds x="332" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="332" y="225" width="37" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1edgvz7_di" bpmnElement="Event_06dc6r4">
+        <dc:Bounds x="152" y="272" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="157" y="315" width="26" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0lhk9cl_di" bpmnElement="Event_0hanmxt">
+        <dc:Bounds x="242" y="272" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="242" y="315" width="37" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_11nti05_di" bpmnElement="Association_11nti05">
+        <di:waypoint x="278" y="112" />
+        <di:waypoint x="350" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_02i2nv5_di" bpmnElement="Association_02i2nv5">
+        <di:waypoint x="363" y="212" />
+        <di:waypoint x="400" y="251" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_1k9502s_di" bpmnElement="Association_1k9502s">
+        <di:waypoint x="185" y="300" />
+        <di:waypoint x="258" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_1oh0dbp_di" bpmnElement="Association_1oh0dbp">
+        <di:waypoint x="278" y="289" />
+        <di:waypoint x="400" y="281" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

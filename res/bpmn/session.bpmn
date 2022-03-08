@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:dela="http://sborex.com/dela/schema" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_15rpm4r" targetNamespace="http://sborex.com/dela" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="3.3.1">
+  <bpmn:signal id="endSession" name="endSession" />
+  <bpmn:escalation id="loggedOut" escalationCode="loggedOut" />
+  <bpmn:process id="session" name="session" processType="None" isClosed="false" isExecutable="false">
+    <bpmn:documentation>Web session lifecycle process that starts automatically for each session and keeps the authorisation data</bpmn:documentation>
+    <bpmn:startEvent id="StartEvent_1d2xg0h" name="Http Session Started">
+      <bpmn:outgoing>SequenceFlow_1ryexwf</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1ryexwf" sourceRef="StartEvent_1d2xg0h" targetRef="Task_0js39te" />
+    <bpmn:userTask id="Task_0js39te" name="login" implementation="##unspecified">
+      <bpmn:incoming>SequenceFlow_1ryexwf</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_0m98yw9</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_13b4gra</bpmn:outgoing>
+      <dela:view type="text/html" code="">&lt;!doctype html&gt;
+&lt;html lang="en"&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+        &lt;meta http-equiv="content-type" content="text/html; charset=utf-8"&gt;
+        &lt;meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"&gt;
+        &lt;title&gt;Login&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;form method="POST" action="login"&gt;
+            &lt;label&gt;Login&lt;input name="login" type="text"/&gt;&lt;/label&gt;
+            &lt;input type="submit"/&gt;
+        &lt;/form&gt;
+                
+        &lt;p&gt;Use "fedd" as login name&lt;/p&gt;
+    &lt;/body&gt;
+&lt;html&gt;</dela:view>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_13b4gra" sourceRef="Task_0js39te" targetRef="Task_181ez9c" />
+    <bpmn:scriptTask id="Task_181ez9c" name="Remember user info" scriptFormat="javascript">
+      <bpmn:incoming>SequenceFlow_13b4gra</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_18i90lf</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_0se25lf</bpmn:outgoing>
+      <bpmn:script>sequence.data.permissions = exchange.in.getBody(java.util.Map.class).login;
+                sequence.data.drafts = new java.util.HashMap();
+                exchange.in.response.sendRedirect("/");</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:userTask id="Task_16rb3rf" name="logout" implementation="##unspecified">
+      <bpmn:incoming>SequenceFlow_18i90lf</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1fc0c83</bpmn:outgoing>
+      <dela:view type="text/html" code="">&lt;!doctype html&gt;
+&lt;html lang="en"&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+        &lt;meta http-equiv="content-type" content="text/html; charset=utf-8"&gt;
+        &lt;meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"&gt;
+        &lt;title&gt;Login&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;body&gt;
+        &lt;form method="POST"&gt;
+            &lt;label&gt;Logout as @{permissions}&lt;/label&gt;
+            &lt;input type="submit"/&gt;
+        &lt;/form&gt;
+    &lt;/body&gt;
+    &lt;/body&gt;
+&lt;html&gt;</dela:view>
+    </bpmn:userTask>
+    <bpmn:scriptTask id="Task_05sdr8w" name="Clear user and groups" scriptFormat="javascript">
+      <bpmn:incoming>SequenceFlow_1ri0a39</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0m98yw9</bpmn:outgoing>
+      <bpmn:script>context = step.sequence.getData();
+                context.remove("permissions");
+                exchange.in.response.sendRedirect("/");</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0m98yw9" sourceRef="Task_05sdr8w" targetRef="Task_0js39te" />
+    <bpmn:subProcess id="SubProcess_0cintww" name="End session" triggeredByEvent="true">
+      <bpmn:intermediateCatchEvent id="IntermediateThrowEvent_0h9bl19" name="Http Session Ended">
+        <bpmn:outgoing>SequenceFlow_07vsj3s</bpmn:outgoing>
+        <bpmn:signalEventDefinition signalRef="endSession" />
+      </bpmn:intermediateCatchEvent>
+      <bpmn:sequenceFlow id="SequenceFlow_07vsj3s" sourceRef="IntermediateThrowEvent_0h9bl19" targetRef="EndEvent_1ya1bz7" />
+      <bpmn:endEvent id="EndEvent_1ya1bz7">
+        <bpmn:incoming>SequenceFlow_07vsj3s</bpmn:incoming>
+        <bpmn:terminateEventDefinition />
+      </bpmn:endEvent>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="SequenceFlow_1fc0c83" sourceRef="Task_16rb3rf" targetRef="IntermediateThrowEvent_0quc2xf" />
+    <bpmn:intermediateThrowEvent id="IntermediateThrowEvent_0quc2xf" name="Logout internal signal">
+      <bpmn:incoming>SequenceFlow_1fc0c83</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1ri0a39</bpmn:outgoing>
+      <bpmn:escalationEventDefinition escalationRef="loggedOut" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1ri0a39" sourceRef="IntermediateThrowEvent_0quc2xf" targetRef="Task_05sdr8w" />
+    <bpmn:sequenceFlow id="SequenceFlow_18i90lf" sourceRef="Task_181ez9c" targetRef="Task_16rb3rf" />
+    <bpmn:sequenceFlow id="SequenceFlow_0se25lf" sourceRef="Task_181ez9c" targetRef="Task_113kfqn" />
+    <bpmn:userTask id="Task_113kfqn" name="modelsource" implementation="##unspecified" dela:permit="fedd">
+      <bpmn:incoming>SequenceFlow_0se25lf</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_15s6p0o</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_136g51w</bpmn:outgoing>
+      <dela:view type="application/xml" code="" permit="fedd">@{deployer.get(exchange.in.headers.modelId) == null ? fmt.parse(completer.getTemplate('blanc')) : deployer.get(exchange.in.headers.modelId).source}</dela:view>
+      <dela:view type="application/xml" code="draft" permit="fedd">@{drafts[exchange.in.headers.modelId] == null ? fmt.parse(completer.getTemplate('blanc')) : drafts[exchange.in.headers.modelId]}</dela:view>
+      <dela:view type="application/xml" code="blanc" permit="fedd">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+      &lt;bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_19h99ro" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="6.4.0"&gt;
+          &lt;bpmn:process id="process_12345" name="Process @{exchange.in.headers.modelId}" isExecutable="false"&gt;
+              &lt;bpmn:startEvent id="StartEvent_0a7vjto"&gt;
+                  &lt;bpmn:outgoing&gt;Flow_0sef37z&lt;/bpmn:outgoing&gt;
+              &lt;/bpmn:startEvent&gt;
+              &lt;bpmn:sequenceFlow id="Flow_0sef37z" sourceRef="StartEvent_0a7vjto" targetRef="Activity_0q1rnux" /&gt;
+              &lt;bpmn:endEvent id="Event_0q3ncgx"&gt;
+                  &lt;bpmn:incoming&gt;Flow_0apanwc&lt;/bpmn:incoming&gt;
+              &lt;/bpmn:endEvent&gt;
+              &lt;bpmn:sequenceFlow id="Flow_0apanwc" sourceRef="Activity_0q1rnux" targetRef="Event_0q3ncgx" /&gt;
+              &lt;bpmn:scriptTask id="Activity_0q1rnux" name="Script" scriptFormat="javascript"&gt;
+                  &lt;bpmn:incoming&gt;Flow_0sef37z&lt;/bpmn:incoming&gt;
+                  &lt;bpmn:outgoing&gt;Flow_0apanwc&lt;/bpmn:outgoing&gt;
+                  &lt;bpmn:script&gt;print("Script Called");&lt;/bpmn:script&gt;
+              &lt;/bpmn:scriptTask&gt;
+          &lt;/bpmn:process&gt;
+          &lt;bpmndi:BPMNDiagram id="BPMNDiagram_1"&gt;
+              &lt;bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1jqjj0r"&gt;
+                  &lt;bpmndi:BPMNEdge id="Flow_0sef37z_di" bpmnElement="Flow_0sef37z"&gt;
+                      &lt;di:waypoint x="188" y="120" /&gt;
+                      &lt;di:waypoint x="240" y="120" /&gt;
+                  &lt;/bpmndi:BPMNEdge&gt;
+                  &lt;bpmndi:BPMNEdge id="Flow_0apanwc_di" bpmnElement="Flow_0apanwc"&gt;
+                      &lt;di:waypoint x="340" y="120" /&gt;
+                      &lt;di:waypoint x="392" y="120" /&gt;
+                  &lt;/bpmndi:BPMNEdge&gt;
+                  &lt;bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_0a7vjto"&gt;
+                      &lt;dc:Bounds x="152" y="102" width="36" height="36" /&gt;
+                  &lt;/bpmndi:BPMNShape&gt;
+                  &lt;bpmndi:BPMNShape id="Event_0q3ncgx_di" bpmnElement="Event_0q3ncgx"&gt;
+                      &lt;dc:Bounds x="392" y="102" width="36" height="36" /&gt;
+                  &lt;/bpmndi:BPMNShape&gt;
+                  &lt;bpmndi:BPMNShape id="Activity_1fumb67_di" bpmnElement="Activity_0q1rnux"&gt;
+                      &lt;dc:Bounds x="240" y="80" width="100" height="80" /&gt;
+                  &lt;/bpmndi:BPMNShape&gt;
+              &lt;/bpmndi:BPMNPlane&gt;
+          &lt;/bpmndi:BPMNDiagram&gt;
+      &lt;/bpmn:definitions&gt;
+    </dela:view>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_136g51w" sourceRef="Task_113kfqn" targetRef="Task_0keqd2a" />
+    <bpmn:scriptTask id="Task_0keqd2a" name="Deploy" scriptFormat="javascript">
+      <bpmn:incoming>SequenceFlow_136g51w</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_15s6p0o</bpmn:outgoing>
+      <bpmn:script>if(exchange.in.getHeader("variant")==='draft'){
+                drafts[exchange.in.getHeader("modelId")] = exchange.in.getBody(java.lang.String.class);
+                }else{
+                deployer.deploy(exchange.in.getHeader("modelId"), exchange.in.body);
+                drafts.remove(exchange.in.getHeader("modelId"));
+                }</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="SequenceFlow_15s6p0o" sourceRef="Task_0keqd2a" targetRef="Task_113kfqn" />
+    <bpmn:boundaryEvent id="BoundaryEvent_1w4ss9v" attachedToRef="Task_113kfqn">
+      <bpmn:outgoing>SequenceFlow_1djd8rz</bpmn:outgoing>
+      <bpmn:escalationEventDefinition escalationRef="loggedOut" />
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="EndEvent_0mrajx6">
+      <bpmn:incoming>SequenceFlow_1djd8rz</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1djd8rz" sourceRef="BoundaryEvent_1w4ss9v" targetRef="EndEvent_0mrajx6" />
+    <bpmn:textAnnotation id="TextAnnotation_1je9sj1">
+      <bpmn:text>The permissions array may be loaded from LDAP. It is kept in a session object and can be checked when needed</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_092soqs" associationDirection="None" sourceRef="Task_181ez9c" targetRef="TextAnnotation_1je9sj1" />
+    <bpmn:textAnnotation id="TextAnnotation_1al7txl">
+      <bpmn:text>A service to return process definitions as XML. A page /res/process.html provides the process editor</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1109bxm" associationDirection="None" sourceRef="Task_113kfqn" targetRef="TextAnnotation_1al7txl" />
+    <bpmn:textAnnotation id="TextAnnotation_1vmlxk0">
+      <bpmn:text>Deploy command</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0usrl39" associationDirection="None" sourceRef="Task_0keqd2a" targetRef="TextAnnotation_1vmlxk0" />
+    <bpmn:textAnnotation id="TextAnnotation_03g6isx">
+      <bpmn:text>Simple login form</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0j34xqt" associationDirection="None" sourceRef="Task_0js39te" targetRef="TextAnnotation_03g6isx" />
+    <dela:view type="text/html">
+@if{step.data['permissions'] == null}
+
+    @includeNamed{'session/login'} 
+
+@else{}
+    &lt;h1&gt;Hello, @{permissions}!&lt;/h1&gt;
+      
+    &lt;h3&gt;Deployed Processes&lt;/h3&gt;
+            
+    &lt;p&gt;Review some sample process designs.&lt;p&gt;
+    &lt;p&gt;In each process you may click an element and choose the gear icon to see its configuration&lt;p&gt;
+    &lt;p&gt;Check also the process-wide configurations like Views, Beans and Resources.&lt;p&gt;
+    &lt;p&gt;A Process View is a template that can display a page before the process instance is started, or provide interface for individual User Tasks page fragments&lt;p&gt;
+    &lt;p&gt;A Bean is an object needed for integrations to work that can not be configured visually. Currently their names are system-wide.&lt;p&gt;
+    &lt;p&gt;A Resource is a process-specific static file available via the web.&lt;p&gt;
+            
+    &lt;ul&gt;
+    @foreach{modelId : deployer.models.keySet()} 
+         
+        &lt;li/&gt; &lt;a href="/res/process.html?taskId=modelsource&amp;amp;modelId=@{modelId}"&gt;@{modelId}&lt;/a&gt;:
+        @code{process=deployer.getStarter(modelId)}
+        @foreach{documentation : process.item.getContainedItems('http://www.omg.org/spec/BPMN/20100524/MODEL', 'documentation')} 
+            @{documentation.getAttribute(null)}
+        @end{}
+       
+    @end{}
+    &lt;/ul&gt;
+            
+    &lt;h3&gt;Drafts&lt;/h3&gt;
+        
+    &lt;p&gt;You may provide a short technical name for the new process definition and create a draft&lt;p&gt;
+    &lt;p&gt;In a process editor, pressing 'Deploy' button will attempt to create an executable process definition instance.&lt;p&gt;
+    &lt;p&gt;'Save Draft' will keep the definition as a draft available for the current web session.&lt;p&gt;
+
+        &lt;form method="GET" action="/res/process.html"&gt;
+            &lt;label&gt;New Process Code&lt;input name="modelId" type="text"/&gt;&lt;/label&gt;
+            &lt;input type="hidden" name="taskId" value="modelsource"/&gt;
+            &lt;input type="submit" value="Create"/&gt;
+        &lt;/form&gt;
+            
+    &lt;ul&gt;
+    @foreach{modelId : drafts.keySet()} 
+         
+        &lt;li/&gt; &lt;a href="/res/process.html?taskId=modelsource&amp;amp;variant=draft&amp;amp;modelId=@{modelId}"&gt;@{modelId}&lt;/a&gt;
+        
+    @end{}
+    &lt;/ul&gt;
+            
+    &lt;h3&gt;Register Upload Page&lt;/h3&gt;
+            
+    &lt;p&gt;Follow this link to test some simple process:&lt;/p&gt;
+
+    &lt;a href="register"&gt;Register&lt;/a&gt;
+            
+            
+@end{}
+    </dela:view>
+    <dela:bean code="deployer" language="javascript">engine.modelService;</dela:bean>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="session">
+      <bpmndi:BPMNEdge id="SequenceFlow_1djd8rz_di" bpmnElement="SequenceFlow_1djd8rz">
+        <di:waypoint x="234" y="323" />
+        <di:waypoint x="185" y="323" />
+        <di:waypoint x="203" y="323" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_15s6p0o_di" bpmnElement="SequenceFlow_15s6p0o">
+        <di:waypoint x="316" y="425" />
+        <di:waypoint x="316" y="365" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_136g51w_di" bpmnElement="SequenceFlow_136g51w">
+        <di:waypoint x="282" y="365" />
+        <di:waypoint x="282" y="425" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0se25lf_di" bpmnElement="SequenceFlow_0se25lf">
+        <di:waypoint x="302" y="242" />
+        <di:waypoint x="302" y="285" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_18i90lf_di" bpmnElement="SequenceFlow_18i90lf">
+        <di:waypoint x="352" y="202" />
+        <di:waypoint x="388" y="202" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1ri0a39_di" bpmnElement="SequenceFlow_1ri0a39">
+        <di:waypoint x="570" y="202" />
+        <di:waypoint x="608" y="202" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1fc0c83_di" bpmnElement="SequenceFlow_1fc0c83">
+        <di:waypoint x="488" y="202" />
+        <di:waypoint x="534" y="202" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0m98yw9_di" bpmnElement="SequenceFlow_0m98yw9">
+        <di:waypoint x="658" y="162" />
+        <di:waypoint x="658" y="124" />
+        <di:waypoint x="169" y="124" />
+        <di:waypoint x="169" y="162" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_13b4gra_di" bpmnElement="SequenceFlow_13b4gra">
+        <di:waypoint x="219" y="202" />
+        <di:waypoint x="252" y="202" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1ryexwf_di" bpmnElement="SequenceFlow_1ryexwf">
+        <di:waypoint x="82" y="202" />
+        <di:waypoint x="119" y="202" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1d2xg0h">
+        <dc:Bounds x="46" y="184" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="33" y="227" width="62" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_1419wsq_di" bpmnElement="Task_0js39te">
+        <dc:Bounds x="119" y="162" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_1t3ds11_di" bpmnElement="Task_181ez9c">
+        <dc:Bounds x="252" y="162" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_0ypwig3_di" bpmnElement="Task_16rb3rf">
+        <dc:Bounds x="388" y="162" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_0yzz794_di" bpmnElement="Task_05sdr8w">
+        <dc:Bounds x="608" y="162" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SubProcess_17nxvbv_di" bpmnElement="SubProcess_0cintww" isExpanded="true">
+        <dc:Bounds x="411" y="281" width="140" height="231" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_07vsj3s_di" bpmnElement="SequenceFlow_07vsj3s">
+        <di:waypoint x="482" y="390" />
+        <di:waypoint x="482" y="445" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateCatchEvent_0ha4iuj_di" bpmnElement="IntermediateThrowEvent_0h9bl19">
+        <dc:Bounds x="464" y="354" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="451" y="317" width="62" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_09m61dj_di" bpmnElement="EndEvent_1ya1bz7">
+        <dc:Bounds x="464" y="445" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_01dw8px_di" bpmnElement="IntermediateThrowEvent_0quc2xf">
+        <dc:Bounds x="534" y="184" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="517" y="227" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_1dtxhky_di" bpmnElement="Task_113kfqn">
+        <dc:Bounds x="252" y="285" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_0ssf6w3_di" bpmnElement="Task_0keqd2a">
+        <dc:Bounds x="252" y="425" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_0mrajx6_di" bpmnElement="EndEvent_0mrajx6">
+        <dc:Bounds x="167" y="305" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1je9sj1_di" bpmnElement="TextAnnotation_1je9sj1">
+        <dc:Bounds x="370" y="50" width="270" height="55" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1al7txl_di" bpmnElement="TextAnnotation_1al7txl">
+        <dc:Bounds x="60" y="390" width="170" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1vmlxk0_di" bpmnElement="TextAnnotation_1vmlxk0">
+        <dc:Bounds x="340" y="530" width="100" height="41" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_03g6isx_di" bpmnElement="TextAnnotation_03g6isx">
+        <dc:Bounds x="220" y="57" width="100" height="41" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BoundaryEvent_1tt13tv_di" bpmnElement="BoundaryEvent_1w4ss9v">
+        <dc:Bounds x="234" y="305" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_092soqs_di" bpmnElement="Association_092soqs">
+        <di:waypoint x="339" y="162" />
+        <di:waypoint x="392" y="105" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_1109bxm_di" bpmnElement="Association_1109bxm">
+        <di:waypoint x="252" y="346" />
+        <di:waypoint x="146" y="390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_0usrl39_di" bpmnElement="Association_0usrl39">
+        <di:waypoint x="345" y="504" />
+        <di:waypoint x="374" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_0j34xqt_di" bpmnElement="Association_0j34xqt">
+        <di:waypoint x="200" y="162" />
+        <di:waypoint x="250" y="98" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

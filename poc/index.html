@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>
+            sborex -- a low-code service platform
+        </title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="w3.css" rel="stylesheet" type="text/css"/>
+        <style>
+            h2,
+            h2,
+            h3,
+            h4,
+            h5 {
+                margin-top: 50px;
+                margin-bottom: 30px
+            }    
+
+            a {color: blue}
+        </style>
+    </head>
+    <body>
+        <div class="w3-container" style="max-width: 1000px; margin: auto">
+            <div class="w3-card-4 w3-panel w3-blue-gray w3-padding-large">
+                <h1 class="w3-serif w3-jumbo">sborex</h1>
+                <i class="w3-serif w3-xlarge">
+                    a low-code service platform
+                </i>
+            </div>
+
+            <div class="w3-panel">
+                <p>
+                    This is a Proof of Concept implementation of a flexible and visually configurable platform for creation of different 
+                    kinds of applications, from small micro-services to enterprise-level information systems.
+                </p>
+                <p>
+                    In a nutshell, Sborex is a visual flowchart 
+                    execution engine with extended web and integration capabilities.
+                </p>
+
+                <a class="w3-button w3-green" href="sborex-poc.jar">Download</a>
+                <a class="w3-button w3-light-green" href="#license">License</a>
+                <a class="w3-button w3-teal" href="https://www.reddit.com/r/sborex/">Discuss <i>on Reddit!</i></a>
+                <a class="w3-button w3-aqua" href="doc/">Draft Docs</a>
+
+                <p>
+                    It runs on Java and starts a webserver on port <span style="font-family: monospace">8585</span>.
+                </p>
+
+                <h2>
+                    What's Inside
+                </h2>
+                <p>
+                    The Java application available for download is a demo app compiled to demonstrate how the system works. 
+                    It contains a number
+                    of preconfigured entities which are deployed automatically upon the system start. 
+                    Below is a short description of them.
+                </p>
+
+                <h3>
+                    Customer
+                </h3>
+                <p>
+                    The customer lifecycle process and a simple phone call interaction algorithm
+                    are defined as an executable sequence of blocks. The example below 
+                    defines entry points for customer record acquisition and modification and a 
+                    conversation plan of a set of questions, infinitely looped for the simplicity of demonstration.
+                </p>
+
+                <p>
+                    The actual process can be of any complexity, contain nested sub-processes, invoke 
+                    other processes by starting or signaling them, call external services or publish 
+                    services to be called externally.
+                    
+                </p>
+
+
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="customer.svg" alt="Customer process" style="width: 75%"/>
+                </p>
+
+                <p>
+                    Alternatively you may define the customer entity using a 
+                    <a href="http://www.bpmn.org/" target="_blank">BPMN</a>-like
+                    <a href="../res/process.html?taskId=modelsource&modelId=customer" target="_blank"> visual 
+                        diagram editor</a>.
+                </p>
+
+                <p>                    
+                    Below is an example of a customer record representation and a contact dialogue initial form (available 
+                    under the hamburger menu button in the upper right corner). Different sections of the customer
+                    data are collapsible for convenience.
+                </p>
+                <p class="w3-card w3-padding-large">
+                    <iframe src="customer.html" width="100%" height="800" frameBorder="0">
+			Customer View
+		    </iframe>
+                </p>
+
+                <p>
+                    The customer data view is designed visually in a view editor:
+                </p>
+
+                <p class="w3-card w3-padding-large">
+                    <img src="view.png" alt="Customer Process Definition" style="width: 100%"/>
+                </p>
+
+
+
+
+
+
+                <h3>
+                    Register
+                </h3>
+                <p>
+                    The Register flowchart is an <a href="https://en.wikipedia.org/wiki/Extract,_transform,_load" target="_blank">ETL</a> 
+                    procedure that defines a process of acquiring a customer data file via web or from a filesystem. This flowchart 
+                    transforms the incoming data and then passes it to a Customer process, iterating over each line of the input file.
+                </p>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="register.svg" alt="Customer process" style="width: 100%"/>
+                </p>
+                <p>
+                    Note the integration points (the circles with an envelope icon) and format transformations that 
+                    are serviced by an embedded 
+                    <a href="https://camel.apache.org/" target="_blank">Apache Camel</a> instance.
+                </p>
+                <p>
+                    The Register definition can be edited in 
+                    <a href="../res/process.html?taskId=modelsource&modelId=register" target="_blank">the BPMN style editor</a>
+                    too.
+                </p>
+
+                <h3>
+                    SIP Server
+                </h3>
+                <p>
+                    The process diagram below demonstrates how a technical service, simple or complex, can be designed in the system. Any of the 
+                    <a href="https://camel.apache.org/components/latest/">Camel components</a> can be used with or without 
+                    little initial configuration, all made in a Sborex process definition:
+                </p>
+                <p class="w3-card w3-padding-small">
+                    <iframe src="../res/process_neat.html?taskId=modelsource&modelId=sipserver" width="100%" height="400" frameBorder="0">
+			SIP Server Process Definition Editor
+		    </iframe>
+                </p>
+
+                <h3>
+                    Session
+                </h3>
+                <p>
+                    This is a technical process that gets started for each of the new web sessions:
+                </p>
+                <p class="w3-card w3-sand w3-padding-large w3-center">
+                    <img src="session.svg" alt="Customer process" style="width: 100%"/>
+                </p>
+                <p>
+                    With the help of the LDAP integration the process 
+                    may query your enterprise user database for roles and permissions, or you may configure access to a custom 
+                    user storage, but currently it just stores the username entered by the user in the session context.
+                </p>
+                <p>
+                    For demonstration simplicity this process
+                    also provides a process editor available to the user right on the app's home page.
+                </p>
+                <p>
+                    The BPMN-style <a href="../res/process.html?taskId=modelsource&modelId=session" target="_blank">process</a>
+                    editor is available too.
+                </p>
+                
+
+
+                <h2>
+                    Try It Yourself
+                </h2>
+                <h3>
+                    <a id="license"></a>License
+                </h3>
+                <p>
+                    You are licensed to run and distribute the Sborex server you have downloaded from the 
+                    link below under the following conditions: you agree to inform us about
+                    any commercial use of it, or about any public service running using it. For commercial use,
+                    you have to tell us who the customer is and how they are using Sborex. For any publicly available service,
+                    you have to provide us with its URL and some stats. If it's both, please provide both. You have to allow us to share
+                    this information publicly and privately.          
+                </p>
+                <h3>
+                    Install and Run
+                </h3>
+                <p>
+                    To try it out, download the Java executable file below:
+                </p>
+                <a class="w3-button w3-green" href="sborex-poc.jar">Download</a>
+                <p>
+                    Place it into a dedicated folder as it will create a database directory and technical files along with it.
+                </p>
+                <p>
+                    Run it as a Java program:
+                </p>
+                <p class="w3-card w3-panel w3-pale-green" style="font-family: monospace">
+                    java -jar sborex-poc.jar
+                </p>
+                <p>
+                    After the system starts go to the system's web server using some modern browser:
+                </p>
+                <p class="w3-card w3-panel w3-pale-blue" style="font-family: monospace">
+                    <a href="http://localhost:8585/">http://localhost:8585/</a>
+                </p>
+                <p>
+                    (Replace <span style="font-family: monospace">localhost</span> with the actual machine address if you are accessing 
+                    it from outside the running host)
+                </p>
+                <p>
+                    Log in as a user with the name <span style="font-family: monospace">fedd</span> and start exploring the system.
+                </p>
+                <p>
+                    In process definition editor pages, you may click the elements (rectangles, circles and diamonds) 
+                    and choose the gear icon to see the element configuration.
+                </p>
+                <p class="w3-card w3-padding-large w3-center">
+                    <img src="edit.png" alt="Customer Process Definition"/>
+                </p>
+                <h3>
+                    Load File and See Customers
+                </h3>
+                <p>
+                    To test the load and transform capabilities, go to 
+                </p>
+                <p class="w3-card w3-panel w3-pale-blue" style="font-family: monospace">
+                    <a href="http://localhost:8585/register">http://localhost:8585/register</a>
+                </p>
+                <p>
+                    and follow the instructions. 
+                </p>
+                
+                <h3>
+                    Preliminary Documentation
+                </h3>
+                <p>
+                    Please see the draft documentation that explains some of the 
+                    systems configurations:
+                </p>
+                
+                <a class="w3-button w3-aqua" href="doc/">Documentation</a>
+                
+
+                <h3>
+                    Troubleshooting
+                </h3>
+                <p>
+                    If the ports 8585, 8543 and 5060 are occupied on the host machine, we may override the default 
+                    configuration by providing the different port numbers at start time:
+                </p>
+                <p class="w3-card w3-panel w3-pale-green" style="font-family: monospace">
+                    java -jar sborex-poc.jar -Dintegration.web.port=8586 -Dintegration.web.port.ssl=8544 -Dintegration.sip.port=5061
+                </p>
+                <p>
+                    If the server stops responding go to the installation directory where your 
+                    <span style="font-family: monospace">sborex-poc.jar</span> file is and delete all the files 
+                    and subfolders inside it except the <span style="font-family: monospace">sborex-poc.jar</span> itself
+                    to start the system from scratch.
+                </p>
+
+                <h2>
+                    Technical Details
+                </h2>
+                <p>
+                    The system is written in Java and is able to run on versions 8+. It doesn't employ the  Spring Boot or Spring whatsoever. 
+                    It's not based on any of the opensource BPMN engines out there.
+                </p>
+                <p>
+                    Apache Camel included in the system is of version 2.24.0. It runs an embedded Jetty webserver 
+                    for the web pages, rest services and websockets.
+                </p>
+                <p>
+                    For the demo it is configured to run with Derby database, also embedded version. It can be configured to use 
+                    PostgreSQL or any other relational database server as its datastore.
+                </p>
+                <p>
+                    The awesome <a href="https://bpmn.io/" target="_blank">bpmn.io</a> library is used for displaying and editing the process definitions
+                    in BPMN visual format. The native mobile and modern editors are also projected.
+                </p>
+                <p>
+                    There is also a thirdparty web page designer that opens by Edit Layout button wherever the element is accompanied with 
+                    a web page template. (Please note that it is not yet fully integrated.)
+                </p>
+
+                <h2>
+                    Status and Prospects
+                </h2>
+                <p>
+                    Sborex is currently not production ready and requires further technical improvements. 
+                    The current version may experience loss of data and performance problems under high load.
+                </p>
+                <p>
+                    The current process modeler is going to be redesigned and more visual editors added to provide a 
+                    real &quot;low code&quot; experience.
+                </p>
+                <p>
+                    The next steps will include embedding the neural 
+                    networking solutions and distributed computing for higher loads.
+                </p>
+
+                <h2>
+                    Contact
+                </h2>
+                <p>
+                    My name is Fyodor "Fedd" Kravchenko. You may contact me via <a href="https://www.linkedin.com/in/kfedd/">LinkedIn</a>, 
+                    drop me <a href="mailto:info@sborex.com">an email</a> or lets talk freely on a 
+                    <a href="https://www.reddit.com/r/sborex/">Sborex subreddit</a>!
+                </p>
+
+            </div>
+        </div> 
+    </body>
+</html>

@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:dela="http://sborex.com/dela/schema" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1eb1cb0" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="3.4.0">
+  <bpmn:process id="register" name="Register" processType="None" isClosed="false" isExecutable="false">
+    <bpmn:documentation>CSV consumer and account data register upload and transform process</bpmn:documentation>
+    <bpmn:startEvent id="StartEvent_0b5388b" name="directory">
+      <bpmn:outgoing>SequenceFlow_00el9nt</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="getFile" />
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_00el9nt" sourceRef="StartEvent_0b5388b" targetRef="Task_1y33xn9" />
+    <bpmn:subProcess id="Task_1y33xn9">
+      <bpmn:incoming>SequenceFlow_00el9nt</bpmn:incoming>
+      <bpmn:incoming>Flow_0a3nf4r</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_12me8pu</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics isSequential="true" />
+      <dela:expression>&lt;method ref="textTokenizer" method="tokenize"/&gt;</dela:expression>
+      <bpmn:startEvent id="StartEvent_1aujylw">
+        <bpmn:outgoing>SequenceFlow_1sj9ac8</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="SequenceFlow_1sj9ac8" sourceRef="StartEvent_1aujylw" targetRef="Task_0ebii3t" />
+      <bpmn:intermediateThrowEvent id="IntermediateThrowEvent_12l8ac1" name="update">
+        <bpmn:incoming>SequenceFlow_05m25uw</bpmn:incoming>
+        <bpmn:outgoing>SequenceFlow_1bgjmed</bpmn:outgoing>
+        <bpmn:signalEventDefinition signalRef="a87a9fe68-066a-4907-9f11-6118ad78e49b" />
+      </bpmn:intermediateThrowEvent>
+      <bpmn:exclusiveGateway id="ExclusiveGateway_1fp4v8g" default="SequenceFlow_0j19ccs">
+        <bpmn:incoming>SequenceFlow_1bgjmed</bpmn:incoming>
+        <bpmn:outgoing>SequenceFlow_0j19ccs</bpmn:outgoing>
+        <bpmn:outgoing>SequenceFlow_194zvc1</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="SequenceFlow_1bgjmed" sourceRef="IntermediateThrowEvent_12l8ac1" targetRef="ExclusiveGateway_1fp4v8g" />
+      <bpmn:sequenceFlow id="SequenceFlow_0j19ccs" sourceRef="ExclusiveGateway_1fp4v8g" targetRef="IntermediateThrowEvent_0d909ik" />
+      <bpmn:intermediateThrowEvent id="IntermediateThrowEvent_0d909ik" name="new">
+        <bpmn:incoming>SequenceFlow_0j19ccs</bpmn:incoming>
+        <bpmn:outgoing>SequenceFlow_12mfv3p</bpmn:outgoing>
+        <bpmn:signalEventDefinition signalRef="newCustomer" />
+      </bpmn:intermediateThrowEvent>
+      <bpmn:sequenceFlow id="SequenceFlow_12mfv3p" sourceRef="IntermediateThrowEvent_0d909ik" targetRef="EndEvent_0w1k5qq" />
+      <bpmn:sequenceFlow id="SequenceFlow_194zvc1" sourceRef="ExclusiveGateway_1fp4v8g" targetRef="EndEvent_0w1k5qq">
+        <bpmn:conditionExpression type="tFormalExpression">emit.proceeded</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:serviceTask id="Task_0ebii3t" name="Unmarshal" implementation="##WebService">
+        <bpmn:incoming>SequenceFlow_1sj9ac8</bpmn:incoming>
+        <bpmn:outgoing>SequenceFlow_1gzqmko</bpmn:outgoing>
+        <dela:service>&lt;unmarshal&gt;
+    &lt;csv delimiter=";" useMaps="true" /&gt;
+&lt;/unmarshal&gt;</dela:service>
+      </bpmn:serviceTask>
+      <bpmn:sequenceFlow id="SequenceFlow_1gzqmko" name="has info" sourceRef="Task_0ebii3t" targetRef="Task_0f8o3bd">
+        <bpmn:conditionExpression type="tFormalExpression">exchange.in.body.size()==1</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:serviceTask id="Task_0f8o3bd" name="Flatten" implementation="##WebService">
+        <bpmn:incoming>SequenceFlow_1gzqmko</bpmn:incoming>
+        <bpmn:outgoing>SequenceFlow_10jt64n</bpmn:outgoing>
+        <dela:service>&lt;setBody&gt;
+    &lt;simple&gt;${body[0]}&lt;/simple&gt;
+&lt;/setBody&gt;</dela:service>
+      </bpmn:serviceTask>
+      <bpmn:sequenceFlow id="SequenceFlow_10jt64n" sourceRef="Task_0f8o3bd" targetRef="Task_0tzzjw9" />
+      <bpmn:scriptTask id="Task_0tzzjw9" name="Transform" scriptFormat="mvel">
+        <bpmn:incoming>SequenceFlow_10jt64n</bpmn:incoming>
+        <bpmn:outgoing>SequenceFlow_05m25uw</bpmn:outgoing>
+        <bpmn:script>[
+    'customer': [
+        'id': exchange.in.body['SSN'],
+        'tags':  ['individual'],
+        'lastName': exchange.in.body['LAST_NAME'],
+        'firstName': exchange.in.body['FIRST_NAME'],
+        'middleName': exchange.in.body['PATRONYMIC'],
+        'identifiers': [
+            [
+                'tags': ['internalPassport', 'main'],
+                'number': exchange.in.body['SSN'],
+                'issuer': exchange.in.body['COMMENT6']
+            ]
+        ],
+        'dateOfBirth': formatter.toUDate(exchange.in.body['BIRTH_DATE'], 'dd.MM.yyyy H:mm'),
+        'contacts': (
+            ret = [];
+            if (exchange.in.body['COMMENTS'] != empty) {
+                ret.add([
+                    'tags': ['home', 'address'],
+                    'address': exchange.in.body['COMMENTS']
+                ]);
+            }
+            if (exchange.in.body['COMMENTS_WORK'] != empty) {
+                ret.add([
+                    'tags': ['work', 'address'],
+                    'address': exchange.in.body['COMMENTS_WORK']
+                ]);
+            }
+            if (exchange.in.body['COMMENTS_REG'] != empty) {
+                ret.add([
+                    'tags': ['home','registration','main','address'],
+                    'address': exchange.in.body['COMMENTS_REG']
+                ]);
+            }
+            for(phoneNumber: exchange.in.body['MOBILE_PHONE'].split(';')){
+                ret.add([
+                    'tags': ['phone','mobile'],
+                    'address': phoneNumber
+                ]);
+            }
+            for(phoneNumber: exchange.in.body['HOME_PHONE'].split(';')){
+                ret.add([
+                    'tags': ['phone','landline','home'],
+                    'address': phoneNumber
+                ]);
+            }
+            for(phoneNumber: exchange.in.body['WORK_PHONE'].split(';')){
+                ret.add([
+                    'tags': ['phone','landline','work'],
+                    'address': phoneNumber
+                ]);
+            }
+            ret;
+        ),
+
+        'accounts' : [[
+            'id': exchange.in.body['CONTRACT_NUMBER'],
+            'identifiers': [
+                [
+                    'tags': ['accountNumber','main'],
+                    'number': exchange.in.body['CONTRACT_NUMBER']
+                ],
+                [
+                    'tags': ['ceid'],
+                    'number': exchange.in.body['CEID']
+                ]
+            ],                
+            'dateOpen': formatter.toUDate(exchange.in.body['ACTIVATION_DATE'], 'dd.MM.yyyy H:mm'),
+            'product': exchange.in.body['CREDIT_TYPE'],
+            'balances': [
+                'loanAmount': [
+                    'balance': formatter.toNumberDot(exchange.in.body['GRANTED_CREDIT']),
+                    'currency': exchange.in.body['CURRENCY']
+                ],
+                'arrears': [
+                    'balance': formatter.toNumberDot(exchange.in.body['DEBT_BALANCE']),
+                    'currency': exchange.in.body['CURRENCY']
+                ],
+                'principalDebt': [
+                    'balance': formatter.toNumberDot(exchange.in.body['Задолженность по ОД']),
+                    'currency': exchange.in.body['CURRENCY']
+                ],
+                'fee': [
+                    'balance': formatter.toNumberDot(exchange.in.body['Коммиссии']),
+                    'currency': exchange.in.body['CURRENCY']
+                ],
+                'fine': [
+                    'balance': formatter.toNumberDot(exchange.in.body['Пени']),
+                    'currency': exchange.in.body['CURRENCY']
+                ],
+                'penalty': [
+                    'balance': formatter.toNumberDot(exchange.in.body['Штрафы']),
+                    'currency': exchange.in.body['CURRENCY']
+                ],
+                'outstanding': [
+                    'balance': formatter.toNumberDot(exchange.in.body['Не просроченный основной долг']),
+                    'currency': exchange.in.body['CURRENCY']
+                ]
+            ]
+        ]]
+    ]
+]</bpmn:script>
+      </bpmn:scriptTask>
+      <bpmn:sequenceFlow id="SequenceFlow_05m25uw" sourceRef="Task_0tzzjw9" targetRef="IntermediateThrowEvent_12l8ac1" />
+      <bpmn:sequenceFlow id="SequenceFlow_1ixxgpi" name="data error" sourceRef="BoundaryEvent_01cijjr" targetRef="Task_1t6yqhg" />
+      <bpmn:endEvent id="EndEvent_0j6jpe3">
+        <bpmn:incoming>SequenceFlow_0mech8u</bpmn:incoming>
+        <bpmn:messageEventDefinition messageRef="aae62acf4-0a91-47c3-bb2c-afe89153c1df" />
+      </bpmn:endEvent>
+      <bpmn:boundaryEvent id="BoundaryEvent_01cijjr" attachedToRef="Task_0tzzjw9">
+        <bpmn:outgoing>SequenceFlow_1ixxgpi</bpmn:outgoing>
+        <bpmn:errorEventDefinition errorRef="SCRIPT" />
+      </bpmn:boundaryEvent>
+      <bpmn:serviceTask id="Task_1t6yqhg" name="Marshal" implementation="##WebService">
+        <bpmn:incoming>SequenceFlow_1ixxgpi</bpmn:incoming>
+        <bpmn:outgoing>SequenceFlow_0mech8u</bpmn:outgoing>
+        <dela:service>&lt;marshal&gt;
+    &lt;csv delimiter=";"/&gt;
+&lt;/marshal&gt;</dela:service>
+      </bpmn:serviceTask>
+      <bpmn:sequenceFlow id="SequenceFlow_0mech8u" sourceRef="Task_1t6yqhg" targetRef="EndEvent_0j6jpe3" />
+      <bpmn:endEvent id="EndEvent_0w1k5qq">
+        <bpmn:incoming>SequenceFlow_12mfv3p</bpmn:incoming>
+        <bpmn:incoming>SequenceFlow_194zvc1</bpmn:incoming>
+        <bpmn:messageEventDefinition messageRef="a8ef29d6f-6f48-4c97-a758-4b48d3d505b2" />
+      </bpmn:endEvent>
+      <bpmn:textAnnotation id="TextAnnotation_1yqbich">
+        <bpmn:text>Read CSV to a key-value map</bpmn:text>
+      </bpmn:textAnnotation>
+      <bpmn:association id="Association_1kxw64v" associationDirection="None" sourceRef="Task_0ebii3t" targetRef="TextAnnotation_1yqbich" />
+      <bpmn:textAnnotation id="TextAnnotation_08mmsi4">
+        <bpmn:text>Transformation command that is planned to have a better GUI to configure</bpmn:text>
+      </bpmn:textAnnotation>
+      <bpmn:association id="Association_19fvcw6" associationDirection="None" sourceRef="Task_0tzzjw9" targetRef="TextAnnotation_08mmsi4" />
+    </bpmn:subProcess>
+    <bpmn:endEvent id="EndEvent_09sriue">
+      <bpmn:incoming>SequenceFlow_12me8pu</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_12me8pu" sourceRef="Task_1y33xn9" targetRef="EndEvent_09sriue" />
+    <bpmn:startEvent id="Event_0wio9hc" name="web">
+      <bpmn:outgoing>Flow_0a3nf4r</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0uajgat" messageRef="a227674e7-1847-4dd6-ad17-6c6597a9d90d" />
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0a3nf4r" sourceRef="Event_0wio9hc" targetRef="Task_1y33xn9" />
+    <bpmn:textAnnotation id="TextAnnotation_02d7tii">
+      <bpmn:text>We may take the file from the filesystem. Override the {{file.root}} property by launching the system with -Dintegration.file.root=... argument</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1akhtq0" associationDirection="None" sourceRef="StartEvent_0b5388b" targetRef="TextAnnotation_02d7tii" />
+    <bpmn:textAnnotation id="TextAnnotation_1mgvkme">
+      <bpmn:text>A rest service</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1bwo81k" associationDirection="None" sourceRef="Event_0wio9hc" targetRef="TextAnnotation_1mgvkme" />
+    <bpmn:textAnnotation id="TextAnnotation_1s0ogiz">
+      <bpmn:text>This block is repeated for each line of the incoming CSV</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1aoierv" associationDirection="None" sourceRef="Task_1y33xn9" targetRef="TextAnnotation_1s0ogiz" />
+    <dela:view type="text/html" code="" permit="fedd">&lt;html&gt;
+            &lt;head&gt;
+                &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
+                &lt;title&gt;Register&lt;/title&gt;
+            &lt;/head&gt;
+            &lt;body&gt;
+                &lt;h2&gt;Load Customer Register&lt;/h2&gt;
+                &lt;input type="file" id="file-selector" /&gt;
+                &lt;script&gt;
+                  const fileSelector = document.getElementById('file-selector');
+                  fileSelector.addEventListener('change', (event) =&gt; {
+
+                    var xhr = new XMLHttpRequest();
+                    xhr.onreadystatechange = function() {
+                        if (this.readyState == 4 &amp;&amp; this.status == 200) {
+                            setTimeout(function(){
+                                window.location.reload(true);
+                            }, 500);
+                        }
+                    }
+                    xhr.open('POST', '/register/upload', true);
+                    xhr.setRequestHeader('Content-Type', event.target.files[0].type + '; charset=windows-1251');
+                    xhr.send(event.target.files[0]);
+
+                  });
+                &lt;/script&gt;
+
+                &lt;h2&gt;Sample Register&lt;/h2&gt;
+        
+                    &lt;p&gt;Take this sample file with customer data: &lt;a href="register/sample.csv"&gt;sample.csv&lt;/a&gt;&lt;/p&gt;
+        
+                    &lt;p&gt;
+                        Put the file into the upload field above. It will start executing the 
+                        &lt;a href="/res/process.html?taskId=modelsource&amp;amp;modelId=register"&gt;register&lt;/a&gt;
+                        process with the event catch element that is configured as a rest service.
+                    &lt;/p&gt;
+        
+                    &lt;p&gt;
+                        The file will be transformed as defined in the &amp;quot;Transform&amp;quot; element
+                        of the register process, and the &lt;a href="/res/process.html?taskId=modelsource&amp;amp;modelId=customer"&gt;customer&lt;/a&gt;
+                        process will be started for each of the customer record. 
+                    &lt;/p&gt;
+                &lt;h2&gt;Loaded Customers&lt;/h2&gt;
+                    &lt;p&gt;
+                        Loaded account info will be updated in about 7-10 seconds after the new file is provided. 
+                        While the sample file has 8 account data, only 5 customers will be loaded,
+                        with one customer having 2 accounts and another having 3.
+                    &lt;/p&gt; 
+                    &lt;p&gt;
+                        Refresh the page if there are less then 5 customers displayed
+                    &lt;/p&gt; 
+        
+                @code{customers = engine.getWaits('user', 'customer', null, null, auth, null, null)}
+                @foreach{customerSequence: customers}
+                    @code{customer = customerSequence.data.customer}
+                    &lt;a href="/@{customerSequence.id}"&gt;@includeNamed{'customer?listitem'}&lt;hr/&gt;&lt;/a&gt;
+                @end{'&lt;br/&gt;'}
+            &lt;/body&gt;
+        &lt;/html&gt;</dela:view>
+    <dela:resource type="text/csv" code="sample.csv" isBinary="true">QkFUQ0hfQ09ERTtDT05UUkFDVF9OVU1CRVI7Q0VJRDtERUJUX0JBTEFOQ0U7QUNUSVZBVElPTl9EQVRFO1NTTjtDT01NRU5UNjtGSVJTVF9OQU1FO0xBU1RfTkFNRTtQQVRST05ZTUlDO1JFR0lPTjtCSVJUSF9EQVRFO0NPTU1FTlRTO0hPTUVfUEhPTkU7TU9CSUxFX1BIT05FO0NPTU1FTlRTX1JFRztDT01NRU5UU19XT1JLO1dPUktfUEhPTkU7R1JBTlRFRF9DUkVESVQ7REVCVF9PVkVSRFVFX0RBWVM7Q1VSUkVOQ1k7w+7xIM/u+Ovo7eA7x+Dk7uvm5e3t7vHy/CDv7iDOxDvH4OTu6+bl7e3u8fL8IO/uIPHy8OD17uLg7ej+O8ru7Ozo8fHo6DvN5SDv8O7x8O735e3t++kg7vHt7uLt7ukg5O7r4zvO8fLg8u7qIO/uIM7EO8/l7eg7z+Xt6CDt4CDv8O7x8O735e3t++Ug7/Du9uXt8vs7z+7i+/jl7e375SDv8O725e3y+zvP8O7x8CDn4OTu6yDv7iDx8vDg9TvP8O7x8O735e3t4P8g6u7s6PHx6P87z/Du8fDu9+Xt7fvlIO/w7vbl7fL7O8/w7vHw7vfl7e376SDu8e3u4u3u6SDk7uvjO8/w7vbl7fIg7eAg7/Du8fDu9yDu8e0g5O7r4zvP8O725e3y+zvY8vDg9Ps7yPLu4+7i4P8g5+Dk7uvm5e3t7vHy/DtUQUtFX09WRVJfREFURTtOQU1FO0xBU1RfUEFZTUVOVF9EQVRFO1BST0RVQ1RfTkFNRTtGSVJTVF9OQU1FMjtMQVNUX05BTUUyO1BBVFJPTllNSUMyO1NTTjI7UE9TVEFMX0NPREVfR0FSO1JFR0lPTl9HQVI7Q0lUWV9HQVI7U1RSRUVUX0dBUjtDT01NRU5UU19HQVI7UE9TVEFMX0NPREVfUkVHX0dBUjtSRUdJT05fUkVHX0dBUjtDSVRZX1JFR19HQVI7U1RSRUVUX1JFR19HQVI7Q09NTUVOVFNfUkVHX0dBUjtNT0JJTEVfUEhPTkVfR0FSO0hPTUVfUEhPTkVfR0FSO1dPUktfUEhPTkVfR0FSO1BSRVZJT1VTX09XTkVSUztDUkVESVRfVFlQRTtEQVRFX0RPV05MT0FECkJTR1ZDZXMwMzsyMDAwMTE7MTI3NzgzNzsxNzUwMDMuOTg7MDkuMDEuMjAwNyAwOjAwOzUwMDMxMjM0NTY7O0hlbnJ5O1R1ZG9yO1ZJSTtFbmdsYW5kOzI4LjAxLjE0NTcgMDowMDtQZW1icm9rZSBTQTcxIDRMQSwgVW5pdGVkIEtpbmdkb207Ozk2MTIxNTIwMDA7O0dyZWVud2ljaCBQZW5pbnN1bGEsIEdyZWVud2ljaCBTRTEwIDlOTiwgVW5pdGVkIEtpbmdkb207MzgzMjIwMzAwMDsxNTAwMDA7OTQzO0dCUDs7Ozs7Ozs7Ozs7OzM0ODk3LjQ5OzE0MDEwNi40OTs7Ozs7MDcuMTIuMjAwOSAwOjAwO1NvY2lldGUgR2VuZXJhbGU7MTAuMDUuMjAwNyAwOjAwOzs7Ozs7Ozs7Ozs7Ozs7Ozs7OztXYXIgTG9hbjswNy4xMi4yMDA5IDA6MDAKR0VDZXMwMTsxMDUwMDE0MzExOzEyNjc2MjU7OTYwMDUuNjswNi4xMi4yMDA2IDA6MDA7NTAwMzY1NDMyMTs7yO7g7e07w/Du5+376TvC4PHo6/zl4uj3O8zu8eri4DsyNS4wOC4xNTMwIDA6MDA7wO3k8O7v7uLgIO/wLfIsIDM5LCDM7vHq4uAsIDExNTQ4NzszODMyNjY2MDAwOyI5MDk1MzM5MDAwOzkxMzc0MzIwMDA7OTIzNzAzMjAwMCI7OzEwMzEzMiBNb3Njb3cgS3JlbWxpbjszODMyNjE4MDAwOzsxMDY5O1JVUjs7OzsxNDE0Ni43Nzs7Ozs7Ozs7OzM1OTcwLjEzOzsyMDU4OS45ODsyNTI5OC43Mjs7MTEuMTIuMjAwOSAwOjAwO0dFIE1vbmV5IEJhbms7MDQuMDQuMjAxMSAwOjAwOzs7Ozs7Ozs7Ozs7Ozs7Ozs7OztMaXZvbmlhbiBNb25leXM7MTEuMTIuMjAwOSAwOjAwCkJTR1ZDZXMwMzsyMTkwNjA7MTI3ODE5NDszNzA0MTUuMjU7MTguMDkuMjAwNyAwOjAwOzM2OTkxMjM0NTY7O1BldHI7SXZhbm92O01pa2hheWxvdmljaDvR4Ozg8PHq4P8g7uHr4PHy/DsyOS4wNy4xOTc0IDA6MDA78+suINHy8O7o8uXr5eksIDE0LCDq4i4yMiwg4y4g0u7r/P/y8ugsINHg7ODw8erg/yDu4esuLCA0NDUwMTE7OyI4NDgyNjEzMDAwOzkwNTMwNTAwMDAiOzs7OzMwMDAwMDs3ODI7UlVSOzs7Ozs7Ozs7Ozs7NzA0MTUuMjU7MzAwMDAwOzs7OzswNy4xMi4yMDA5IDA6MDA7ysDBIKvB4O3qINHu8fzl8uUgxuXt5fDg6/wgwu7x8u7quzsxOC4xMC4yMDA3IDA6MDA7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O8/u8vDl4ejy5ev88ero6SDq8OXk6PI7MDcuMTIuMjAwOSAwOjAwCkJTR1ZDZXMwMzsyMDAwMTA7MTI3NzgzNzsxNzUwMDMuOTg7MDkuMDEuMjAwNyAwOjAwOzUwMDMxMjM0NTY7O0hlbnJ5O1R1ZG9yO1ZJSTtFbmdsYW5kOzI4LjAxLjE0NTcgMDowMDtQZW1icm9rZSBTQTcxIDRMQSwgVW5pdGVkIEtpbmdkb207Ozk2MTIxNTIwMDA7O0dyZWVud2ljaCBQZW5pbnN1bGEsIEdyZWVud2ljaCBTRTEwIDlOTiwgVW5pdGVkIEtpbmdkb207MzgzMjIwMzAwMDsxNDAwMDA7MTIwMDtHQlA7Ozs7Ozs7Ozs7OzszNDg5Ny40OTsxNDAxMDYuNDk7Ozs7OzA3LjEyLjIwMDkgMDowMDtTb2NpZXRlIEdlbmVyYWxlOzEwLjA1LjIwMDcgMDowMDs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7V2FyIExvYW47MDcuMTIuMjAwOSAwOjAwCkJTR1ZDZXMwMzsyMDU3MjA7MTI3Nzk3MjsyODI3ODEuNDU7MDIuMDQuMjAwNyAwOjAwOzM2OTk2NTQzMjE7O0VkdWFyZDtTaGVyZW1ldGE7U3RhdnJvdmljaDvR4Ozg8PHq4P8g7uHr4PHy/DsxNy4wNS4xOTYyIDA6MDA78+suIMPl7vDj6P8gxOjs6PLw7uLgLCDjLiDR4Ozg8OAsINHg7ODw8erg/yDu4esuLCA0NDMwOTU7ODQ2OTUyMTAwMDsiODQ2Mjc4NDAwMDs5MTc5NTQ1MDAwIjs0NDMwMTAgIC0gINHAzMDQwCDDICDTyy7K0MDRzc7A0MzFydHKwN87OzsyNTAwMDA7ODkwO1JVUjs7Ozs7Ozs7Ozs7OzQ2MzkwLjkzOzIzNjM5MC41Mjs7Ozs7MDcuMTIuMjAwOSAwOjAwO8rAwSCrweDt6iDR7vH85fLlIMbl7eXw4Ov8IMLu8fLu6rs7MTAuMTAuMjAwNyAwOjAwOzs7Ozs7Ozs7Ozs7Ozs7Ozs7OzvP7vLw5eHo8uXr/PHq6Okg6vDl5OjyOzA3LjEyLjIwMDkgMDowMApLRUNlczE7MDAyNzktSUMtMDAwMDAwMDI0NjI2Ozc0NzIzMTs4ODEzLjA3OzI1LjA4LjIwMDYgMDowMDszNjA1NjU0MzIxOztUaG9tYXM7QW5kZXJzb247QTtNYXRyaXg7MjkuMDUuMTk2NyAwOjAwO0xvd2VyIERvd250b3duLCBDYXBpdGFsIENpdHksIFVTQTs4NDY5NTkyMDAwOyI5MDMzMDAyMDAwOzkxNzk0MTAwMDAiO0Rvd25lciBVcHRvd24sIENhcGl0YWwgQ2l0eSwgVVNBO1VwcGVyIERvd250b3duLCBDYXBpdGFsIENpdHksIFVTQTs4NDYyNjE5MDAwOzcxODk7NTI5O1VTRDs7MzU5NC40OTs7OTcuMDU7Ozs7OzE1NDMuODE7Ozs7Ozs7MzU3Ny43Mjs7MDYuMDYuMjAwOCAwOjAwO01ldGEgQ29ydGV4IEJhbms7MDYuMTIuMjAwNiAwOjAwO0Nhc2ggVG9kYXk7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Q2FzaCBMb2FuOzA2LjA2LjIwMDggMDowMApLRUNlczE7MDAyNzktSUMtMDAwMDAwMDE4NTI0Ozc0NzIzMTsyMjc3MS4wODsyMi4wNy4yMDA2IDA6MDA7MzYwNTY1NDMyMTs7VGhvbWFzO0FuZGVyc29uO0E7TWF0cml4OzI5LjA1LjE5NjcgMDowMDtMb3dlciBEb3dudG93biwgQ2FwaXRhbCBDaXR5LCBVU0E7ODQ2OTU5MjAwMDsiOTAzMzAwMjAwMDs5MTc5NDEwMDAwIjtEb3duZXIgVXB0b3duLCBDYXBpdGFsIENpdHksIFVTQTtVcHBlciBEb3dudG93biwgQ2FwaXRhbCBDaXR5LCBVU0E7ODQ2MjYxOTAwMDsxNDQ5NC40ODs1MzI7VVNEOzsxMDA1NC40Mzs7Ozs7OzszNjY1LjY1Ozs7Ozs7ODE5LjIyOzgyMzEuNzg7OzA2LjA2LjIwMDggMDowMDtNZXRhIENvcnRleCBCYW5rOzI4LjA3LjIwMDkgMDowMDtIb3VzZTs7Ozs7Ozs7Ozs7Ozs7Ozs7OztNb3J0Z2FnZTswNi4wNi4yMDA4IDA6MDAKS0VDZXMxOzAwMjc5LUlDLTAwMDAwMDBlZWVlZTsxMTExMTE7MTExMTEuMTE7MjIuMDEuMjAwNiAwOjAwOzM2MDU2NTQzMjE7O1Rob21hcztBbmRlcnNvbjtBO01hdHJpeDsyOS4wNS4xOTY3IDA6MDA7TG93ZXIgRG93bnRvd24sIENhcGl0YWwgQ2l0eSwgVVNBOzg0Njk1OTIwMDA7IjkwMzMwMDIwMDA7OTE3OTQxMDAwMCI7RG93bmVyIFVwdG93biwgQ2FwaXRhbCBDaXR5LCBVU0E7VXBwZXIgRG93bnRvd24sIENhcGl0YWwgQ2l0eSwgVVNBOzg0NjI2MTkwMDA7MTQ0OTQuNDg7NTMyO1VTRDs7MTAwNTQuNDM7Ozs7Ozs7MzY2NS42NTs7Ozs7OzgxOS4yMjs4MjMxLjc4OzswNi4wNi4yMDA4IDA6MDA7TWV0YSBDb3J0ZXggQmFuazsyOC4wNy4yMDA5IDA6MDA7Q29tcHV0ZXI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7T3ZlcmRyYWZ0OzA2LjA2LjIwMDggMDowMAo=</dela:resource>
+    <dela:bean code="textTokenizer" language="javascript">new (Java.type("com.vsetec.utilities.ReaderTokenizer"))("\n", 1);</dela:bean>
+    <dela:bean code="formatter" language="javascript">new (Java.type("com.vsetec.utilities.Formatter"));</dela:bean>
+  </bpmn:process>
+  <bpmn:signal id="newCustomer" name="newCustomer" />
+  <bpmn:signal id="a87a9fe68-066a-4907-9f11-6118ad78e49b" name="updateCustomer_@{result.customer.id}" />
+  <bpmn:message id="getFile" name="file:{{file.root}}in?include=.*\.csv&#38;charset=windows-1251&#38;move=../out/done" />
+  <bpmn:message id="a227674e7-1847-4dd6-ad17-6c6597a9d90d" name="rest:post:register/upload?bindingMode=off" />
+  <bpmn:message id="aae62acf4-0a91-47c3-bb2c-afe89153c1df" name="file:{{file.root}}/err?fileName=err.txt&#38;fileExist=Append" />
+  <bpmn:message id="a8ef29d6f-6f48-4c97-a758-4b48d3d505b2" name="log:com.sborex.register?level=INFO" />
+  <bpmn:error id="SCRIPT" name="SCRIPT" errorCode="SCRIPT" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="register">
+      <bpmndi:BPMNShape id="TextAnnotation_1mgvkme_di" bpmnElement="TextAnnotation_1mgvkme">
+        <dc:Bounds x="160" y="90" width="100" height="30" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1s0ogiz_di" bpmnElement="TextAnnotation_1s0ogiz">
+        <dc:Bounds x="650" y="517" width="190" height="45" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0a3nf4r_di" bpmnElement="Flow_0a3nf4r">
+        <di:waypoint x="158" y="240" />
+        <di:waypoint x="200" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_12me8pu_di" bpmnElement="SequenceFlow_12me8pu">
+        <di:waypoint x="770" y="343" />
+        <di:waypoint x="812" y="343" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_00el9nt_di" bpmnElement="SequenceFlow_00el9nt">
+        <di:waypoint x="158" y="450" />
+        <di:waypoint x="200" y="450" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="StartEvent_19q7lwd_di" bpmnElement="StartEvent_0b5388b">
+        <dc:Bounds x="122" y="432" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="118" y="413" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_176apzg_di" bpmnElement="Event_0wio9hc">
+        <dc:Bounds x="122" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="130" y="265" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_02d7tii_di" bpmnElement="TextAnnotation_02d7tii">
+        <dc:Bounds x="180" y="520" width="440" height="40" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_09sriue_di" bpmnElement="EndEvent_09sriue">
+        <dc:Bounds x="812" y="325" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1akhtq0_di" bpmnElement="Association_1akhtq0">
+        <di:waypoint x="148" y="466" />
+        <di:waypoint x="180" y="535" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="SubProcess_1xao8md_di" bpmnElement="Task_1y33xn9" isExpanded="true">
+        <dc:Bounds x="200" y="120" width="570" height="373" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1yqbich_di" bpmnElement="TextAnnotation_1yqbich">
+        <dc:Bounds x="412" y="140" width="100" height="41" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_08mmsi4_di" bpmnElement="TextAnnotation_08mmsi4">
+        <dc:Bounds x="560" y="140" width="190" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0mech8u_di" bpmnElement="SequenceFlow_0mech8u">
+        <di:waypoint x="520" y="261" />
+        <di:waypoint x="542" y="261" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_05m25uw_di" bpmnElement="SequenceFlow_05m25uw">
+        <di:waypoint x="520" y="398" />
+        <di:waypoint x="542" y="398" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_10jt64n_di" bpmnElement="SequenceFlow_10jt64n">
+        <di:waypoint x="390" y="398" />
+        <di:waypoint x="420" y="398" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_194zvc1_di" bpmnElement="SequenceFlow_194zvc1">
+        <di:waypoint x="620" y="373" />
+        <di:waypoint x="620" y="242" />
+        <di:waypoint x="687" y="242" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_12mfv3p_di" bpmnElement="SequenceFlow_12mfv3p">
+        <di:waypoint x="705" y="380" />
+        <di:waypoint x="705" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0j19ccs_di" bpmnElement="SequenceFlow_0j19ccs">
+        <di:waypoint x="645" y="398" />
+        <di:waypoint x="687" y="398" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1bgjmed_di" bpmnElement="SequenceFlow_1bgjmed">
+        <di:waypoint x="578" y="398" />
+        <di:waypoint x="595" y="398" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1sj9ac8_di" bpmnElement="SequenceFlow_1sj9ac8">
+        <di:waypoint x="266" y="261" />
+        <di:waypoint x="290" y="261" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1gzqmko_di" bpmnElement="SequenceFlow_1gzqmko">
+        <di:waypoint x="340" y="301" />
+        <di:waypoint x="340" y="358" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="356" y="323" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1ixxgpi_di" bpmnElement="SequenceFlow_1ixxgpi">
+        <di:waypoint x="470" y="340" />
+        <di:waypoint x="470" y="301" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="474" y="319" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="StartEvent_1aujylw_di" bpmnElement="StartEvent_1aujylw">
+        <dc:Bounds x="230" y="243" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_17us0sm_di" bpmnElement="Task_0ebii3t">
+        <dc:Bounds x="290" y="221" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_06tupgt_di" bpmnElement="Task_0f8o3bd">
+        <dc:Bounds x="290" y="358" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_1jgniv5_di" bpmnElement="Task_1t6yqhg">
+        <dc:Bounds x="420" y="221" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_1bmw9d1_di" bpmnElement="Task_0tzzjw9">
+        <dc:Bounds x="420" y="358" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_0612j68_di" bpmnElement="EndEvent_0j6jpe3">
+        <dc:Bounds x="542" y="243" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_0q5glnf_di" bpmnElement="IntermediateThrowEvent_12l8ac1">
+        <dc:Bounds x="542" y="380" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="544" y="423" width="34" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1fp4v8g_di" bpmnElement="ExclusiveGateway_1fp4v8g" isMarkerVisible="true">
+        <dc:Bounds x="595" y="373" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_1wgxyac_di" bpmnElement="IntermediateThrowEvent_0d909ik">
+        <dc:Bounds x="687" y="380" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="695" y="426" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_0jlop93_di" bpmnElement="EndEvent_0w1k5qq">
+        <dc:Bounds x="687" y="224" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1kxw64v_di" bpmnElement="Association_1kxw64v">
+        <di:waypoint x="385" y="222" />
+        <di:waypoint x="433" y="181" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_19fvcw6_di" bpmnElement="Association_19fvcw6">
+        <di:waypoint x="493" y="358" />
+        <di:waypoint x="590" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BoundaryEvent_0jlxnwh_di" bpmnElement="BoundaryEvent_01cijjr">
+        <dc:Bounds x="452" y="340" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1bwo81k_di" bpmnElement="Association_1bwo81k">
+        <di:waypoint x="145" y="223" />
+        <di:waypoint x="180" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_1aoierv_di" bpmnElement="Association_1aoierv">
+        <di:waypoint x="685" y="493" />
+        <di:waypoint x="704" y="517" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <link rel="stylesheet" href="dela.css" type="text/css" />
+        <link rel="stylesheet" href="process.css" type="text/css" />
+        <link rel="stylesheet" href="vendor/bpmn-js/assets/diagram-js.css" type="text/css" />
+        <link rel="stylesheet" href="vendor/bpmn-js/assets/bpmn-font/css/bpmn-embedded.css" type="text/css" />
+        <link rel="stylesheet" href="vendor/grapesjs/assets/css/grapes.min.css" type="text/css"/>
+        <link href="w3.css" rel="stylesheet" type="text/css"/>
+        <title>Process Editor</title>
+    </head>
+    <body>
+
+        
+        <div class="canvas" id="bpmn-container">
+            <div class="w3-card w3-sand w3-padding-small w3-left"
+                style="z-index: 100; position: fixed; bottom: 20px; left: 50px; right: 100px; display: flex; height: auto !important; width: auto !important;">
+                <span onclick="this.parentElement.style.display='none'"
+                class="w3-button w3-display-topright">X</span>                
+                <p>
+                    This is an <a href="https://en.wikipedia.org/wiki/Extract,_transform,_load" target="_blank"
+                                  style="text-decoration: underline">ETL</a> 
+                    procedure that defines a process of acquiring a customer data file via web or from a filesystem. 
+                    This flowchart transforms the incoming data and then passes it to a
+                    <a href="process_customer.html?taskId=modelsource&modelId=customer"
+                       style="text-decoration: underline">Customer process</a>, 
+                    iterating over each line of the input file.
+                     
+                <br/>
+                    This is a BPMN-style editor for a 
+                    <a href="../poc/" style="text-decoration: underline">Sborex</a> system entity.
+                    
+                    Click an element to see the options for drawing and editing the diagram; then you may
+                    select the gears <img src="../poc/gear.svg"/> to see the element's attributes.
+                    
+                    Press Views, Beans or Resources buttons to see the diagram entity level attributes.
+                    
+                    BPMN diagram button downloads a definition XML file; SVG image button generates a vector image.
+                    
+                    See the small <a href="../poc/doc/" style="text-decoration: underline">Sborex tutorial</a> for details.
+                    
+                    The 
+                    <a id="verticalhref" href="#" style="text-decoration: underline">vertical workflow style</a>
+                    is another way of designing the same entity.
+                </p>
+            </div>
+        </div>
+
+        <script src="./dela.js"></script>
+        <script src="./process.js"></script>
+        
+        <script type="text/javascript">
+            let url = new URL(window.location.href);
+            document.getElementById("verticalhref").setAttribute('href', '../poc/' + url.searchParams.get('modelId') + '.svg');
+        </script>
+    </body>
+</html>
